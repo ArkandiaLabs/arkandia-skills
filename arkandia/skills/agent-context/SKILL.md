@@ -1,6 +1,6 @@
 ---
 name: agent-context
-description: Generate a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for the current repository so AI coding agents can reason about it. Invoke with `/agent-context [en|es]`.
+description: Generate a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for the current repository so AI coding agents can reason about it. Invoke with `/arkandia:agent-context [en|es]`.
 argument-hint: '[en|es]'
 disable-model-invocation: true
 ---
@@ -158,7 +158,7 @@ Enforce the ~80-line ceiling. If you exceed it, move content into a specialized 
 3. Remind the user:
    - Commit: `git add AGENTS.md CLAUDE.md docs/ && git commit -m "docs: bootstrap context pack for AI coding agents"`
    - Next suggested step: fill in `<!-- TODO -->` markers and review ADRs.
-   - Re-run `/agent-context` later; it will augment, not overwrite.
+   - Re-run `/arkandia:agent-context` later; it will augment, not overwrite.
 
 ---
 

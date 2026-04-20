@@ -1,0 +1,19 @@
+{
+  "name": "arkandia",
+  "version": "0.1.0",
+  "description": "Arkandia's toolkit of AI coding-agent skills. Currently ships `agent-context` — a skill that bootstraps a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for any repository.",
+  "author": {
+    "name": "Manuel Zapata",
+    "email": "apps@arkandia.co"
+  },
+  "homepage": "https://github.com/ArkandiaLabs/arkandia-skills",
+  "license": "MIT",
+  "keywords": [
+    "agents.md",
+    "context",
+    "documentation",
+    "harness",
+    "onboarding",
+    "arkandia"
+  ]
+}

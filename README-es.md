@@ -1,8 +1,8 @@
-# agent-context
+# arkandia-skills
 
 > *La IA no lee tu mente. Lee archivos.*
 
-Un plugin para agentes de código de IA que genera un paquete de documentación mínimo y bien estructurado — `AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura — para cualquier repositorio. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
+Una colección de skills para agentes de código de IA, desde Arkandia. Actualmente incluye un skill — `agent-context` — que genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
 
 **[English version →](./README.md)**
 
@@ -19,8 +19,8 @@ El diseño está informado por el artículo de *harness engineering* de OpenAI (
 Dentro de Claude Code:
 
 ```
-/plugin marketplace add ArkandiaLabs/agent-context-plugin
-/plugin install agent-context@agent-context
+/plugin marketplace add ArkandiaLabs/arkandia-skills
+/plugin install arkandia@arkandia
 ```
 
 ### Opción B — `npx skills` ([skills.sh](https://skills.sh) de Vercel Labs)
@@ -28,20 +28,20 @@ Dentro de Claude Code:
 Desde tu terminal, en cualquier directorio:
 
 ```bash
-npx skills add ArkandiaLabs/agent-context-plugin
+npx skills add ArkandiaLabs/arkandia-skills
 ```
 
 El CLI auto-descubre skills en `skills/` y lee el manifiesto `.claude-plugin/marketplace.json`. Flags útiles:
 
 ```bash
 # Instalar globalmente en vez de en el proyecto actual
-npx skills add ArkandiaLabs/agent-context-plugin -g
+npx skills add ArkandiaLabs/arkandia-skills -g
 
 # Apuntar específicamente a Claude Code (el CLI soporta varios agentes)
-npx skills add ArkandiaLabs/agent-context-plugin -a claude-code
+npx skills add ArkandiaLabs/arkandia-skills -a claude-code
 
 # No interactivo (amigable para CI)
-npx skills add ArkandiaLabs/agent-context-plugin -y
+npx skills add ArkandiaLabs/arkandia-skills -y
 ```
 
 ## Uso
@@ -49,8 +49,8 @@ npx skills add ArkandiaLabs/agent-context-plugin -y
 Dentro de cualquier repositorio:
 
 ```
-/agent-context          # Salida en inglés (default)
-/agent-context es       # Salida en español
+/arkandia:agent-context          # Salida en inglés (default)
+/arkandia:agent-context es       # Salida en español
 ```
 
 El skill va a:
