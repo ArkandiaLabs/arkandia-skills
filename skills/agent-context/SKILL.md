@@ -165,7 +165,6 @@ Enforce the ~80-line ceiling. If you exceed it, move content into a specialized 
 ## Reference
 
 - `templates/en/` and `templates/es/` — doc skeletons.
-- `examples/campus-prep-reference.md` — a real-world exemplar (the author's own repo) that follows this pattern at full fidelity.
 
 ## Rules
 
