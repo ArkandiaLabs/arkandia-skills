@@ -14,12 +14,35 @@ El diseño está informado por el artículo de *harness engineering* de OpenAI (
 
 ## Instalación
 
+### Opción A — Marketplace nativo de Claude Code
+
+Dentro de Claude Code:
+
 ```
-/plugin marketplace add <github-org>/agent-context-plugin
+/plugin marketplace add ArkandiaLabs/agent-context-plugin
 /plugin install agent-context@agent-context
 ```
 
-Reemplaza `<github-org>` con la ubicación del marketplace cuando este repo esté publicado.
+### Opción B — `npx skills` ([skills.sh](https://skills.sh) de Vercel Labs)
+
+Desde tu terminal, en cualquier directorio:
+
+```bash
+npx skills add ArkandiaLabs/agent-context-plugin
+```
+
+El CLI auto-descubre skills en `skills/` y lee el manifiesto `.claude-plugin/marketplace.json`. Flags útiles:
+
+```bash
+# Instalar globalmente en vez de en el proyecto actual
+npx skills add ArkandiaLabs/agent-context-plugin -g
+
+# Apuntar específicamente a Claude Code (el CLI soporta varios agentes)
+npx skills add ArkandiaLabs/agent-context-plugin -a claude-code
+
+# No interactivo (amigable para CI)
+npx skills add ArkandiaLabs/agent-context-plugin -y
+```
 
 ## Uso
 

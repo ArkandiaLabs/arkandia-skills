@@ -14,12 +14,35 @@ The design is informed by OpenAI's harness-engineering writing (*"AGENTS.md is a
 
 ## Install
 
+### Option A — Claude Code plugin marketplace (native)
+
+Inside Claude Code:
+
 ```
-/plugin marketplace add <github-org>/agent-context-plugin
+/plugin marketplace add ArkandiaLabs/agent-context-plugin
 /plugin install agent-context@agent-context
 ```
 
-Replace `<github-org>` with the marketplace location once this repo is published.
+### Option B — `npx skills` ([skills.sh](https://skills.sh) by Vercel Labs)
+
+From your terminal, anywhere:
+
+```bash
+npx skills add ArkandiaLabs/agent-context-plugin
+```
+
+The CLI auto-discovers skills in `skills/` and reads the `.claude-plugin/marketplace.json` manifest. Useful flags:
+
+```bash
+# Install globally instead of into the current project
+npx skills add ArkandiaLabs/agent-context-plugin -g
+
+# Target Claude Code specifically (the CLI supports several agents)
+npx skills add ArkandiaLabs/agent-context-plugin -a claude-code
+
+# Non-interactive (CI-friendly)
+npx skills add ArkandiaLabs/agent-context-plugin -y
+```
 
 ## Use
 
