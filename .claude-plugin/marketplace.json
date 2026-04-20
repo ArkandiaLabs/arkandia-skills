@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "agent-context",
-      "source": ".",
+      "source": "./agent-context",
       "description": "Generate AGENTS.md and supporting docs (architecture, ADRs, data model, infrastructure) for any repository. Supports Java, .NET, PHP, Python, Node, Go, Rust, Ruby. English or Spanish output."
     }
   ]
