@@ -1,0 +1,18 @@
+{
+  "name": "agent-context",
+  "version": "0.1.0",
+  "description": "Bootstrap a minimal, well-structured documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) so AI coding agents can reason about any repository.",
+  "author": {
+    "name": "Manuel Zapata",
+    "email": "apps@arkandia.co"
+  },
+  "homepage": "https://github.com/arkandia/agent-context-plugin",
+  "license": "MIT",
+  "keywords": [
+    "agents.md",
+    "context",
+    "documentation",
+    "harness",
+    "onboarding"
+  ]
+}
