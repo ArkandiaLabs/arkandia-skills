@@ -2,7 +2,7 @@
 
 > *La IA no lee tu mente. Lee archivos.*
 
-Un plugin de Claude Code que genera un paquete de documentación mínimo y bien estructurado — `AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura — para cualquier repositorio. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto.
+Un plugin para agentes de código de IA que genera un paquete de documentación mínimo y bien estructurado — `AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura — para cualquier repositorio. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
 
 **[English version →](./README.md)**
 
@@ -14,7 +14,7 @@ El diseño está informado por el artículo de *harness engineering* de OpenAI (
 
 ## Instalación
 
-### Opción A — Marketplace nativo de Claude Code
+### Opción A — Marketplace nativo de Claude Code (plugin)
 
 Dentro de Claude Code:
 

@@ -2,7 +2,7 @@
 
 > *The AI can't read your mind. It reads files.*
 
-A Claude Code plugin that bootstraps a minimal, well-structured documentation pack — `AGENTS.md`, architecture, ADRs, data model, infrastructure — for any repository. The generated pack follows the [`agents.md`](https://agents.md) convention and is sized so an AI coding agent can actually hold it in context.
+An AI coding-agent plugin that bootstraps a minimal, well-structured documentation pack — `AGENTS.md`, architecture, ADRs, data model, infrastructure — for any repository. The generated pack follows the [`agents.md`](https://agents.md) convention and is sized so an AI coding agent can actually hold it in context. Works with Claude Code, OpenCode, Codex, Cursor, and the other agents supported by [`skills.sh`](https://skills.sh).
 
 **[Versión en español →](./README-es.md)**
 
@@ -14,7 +14,7 @@ The design is informed by OpenAI's harness-engineering writing (*"AGENTS.md is a
 
 ## Install
 
-### Option A — Claude Code plugin marketplace (native)
+### Option A — Native Claude Code plugin marketplace
 
 Inside Claude Code:
 
