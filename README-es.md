@@ -2,7 +2,7 @@
 
 > *La IA no lee tu mente. Lee archivos.*
 
-Una colección de skills para agentes de código de IA, desde Arkandia. Actualmente incluye un skill — `agent-context` — que genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
+Una colección de skills para agentes de código de IA, desde Arkandia. Hoy son dos skills: **`agent-context`** genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio, y **`agent-context-dotnet`** agrega encima un análisis profundo especializado en .NET. Ambos terminan validando contigo las afirmaciones más importantes que generaron, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
 
 **[English version →](./README.md)**
 
@@ -53,13 +53,21 @@ Dentro de cualquier repositorio:
 /arkandia:agent-context es       # Salida en español
 ```
 
-El skill va a:
+Para repositorios .NET, continúa con el especialista (córrelo después de `agent-context`, o por su cuenta):
 
-1. **Descubrir** — escanea el repo buscando lenguaje, framework, persistencia, CI, IaC y docs existentes. Soporta Java (Maven/Gradle/Spring), .NET (ASP.NET Core/EF Core), PHP (Laravel/Symfony/WordPress), Python, Node, Go, Ruby, Rust, y señales de infra empresarial (Liquibase, Flyway, Jenkins, Azure DevOps, Kubernetes, Terraform).
+```
+/arkandia:agent-context-dotnet      # Salida en inglés (default)
+/arkandia:agent-context-dotnet es   # Salida en español
+```
+
+El skill `agent-context` va a:
+
+1. **Descubrir** — escanea el repo buscando lenguaje, framework, persistencia, CI, IaC y docs existentes. Soporta Java (Maven/Gradle/Spring), PHP (Laravel/Symfony/WordPress), Python, Node, Go, Ruby, Rust, .NET, y señales de infra empresarial (Liquibase, Flyway, Jenkins, Azure DevOps, Kubernetes, Terraform). Cuando detecta .NET te remite a `agent-context-dotnet` para un análisis más profundo.
 2. **Entrevistar** — pregunta solo lo que no se puede inferir: contexto de negocio, reglas no obvias, docs opcionales.
 3. **Redactar** — llena plantillas con tus respuestas y los hallazgos del repo.
 4. **Conectar** — genera `AGENTS.md` (≤80 líneas, estilo tabla de contenidos) y `CLAUDE.md` delegador.
-5. **Verificar** — reporta el árbol de archivos escritos, valida los enlaces.
+5. **Validar afirmaciones** — expone los hechos clave que escribió (framework + versión, persistencia, comandos, entidades principales), cada uno con su fuente y nivel de confianza, y luego confirma o corrige contigo los inciertos. Inspirado en [Claimify](https://arxiv.org/abs/2502.10855) de Microsoft Research. Escribe un registro de auditoría en `docs/claims-ledger.md`.
+6. **Verificar** — reporta el árbol de archivos escritos, valida los enlaces.
 
 Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone adiciones en vez de sobrescribir.
 
@@ -74,6 +82,8 @@ Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone ad
     ├── architecture.md
     ├── data-model.md
     ├── infrastructure.md
+    ├── claims-ledger.md   # qué se verificó vs qué queda pendiente
+    ├── dotnet.md          # agregado por agent-context-dotnet (repos .NET)
     ├── target-user.md     # opcional
     ├── design.md          # opcional
     └── adrs/
@@ -82,12 +92,15 @@ Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone ad
         └── adr-0001-<slug>.md
 ```
 
-Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. El skill no va a inventar versiones de framework, detalles de esquema, ni contexto de negocio que no pueda verificar.
+Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. Los skills no van a inventar versiones de framework, detalles de esquema, ni contexto de negocio que no puedan verificar — y el paso de validación de afirmaciones te pide confirmar los hechos clave antes de que confíes en ellos.
+
+`agent-context-dotnet` funciona mejor junto a `agent-context` (instalar el plugin/repo trae ambos), pero también funciona **por su cuenta**: si no existe un paquete base, produce `docs/dotnet.md` más un `AGENTS.md` mínimo para que el análisis profundo siga siendo accesible.
 
 ## Agradecimientos
 
 - La convención [`agents.md`](https://agents.md).
 - *Harness engineering: leveraging Codex in an agent-first world* de OpenAI.
+- *Claimify* de Microsoft Research (*Towards Effective Extraction and Evaluation of Factual Claims*, [arXiv:2502.10855](https://arxiv.org/abs/2502.10855)) — la base del paso de validación de afirmaciones.
 - Los principios del *Método Arkandia* enseñados en el workshop *Desarrollo Guiado por IA*.
 
 ## Licencia
