@@ -1,8 +1,8 @@
 <!--
 Placeholders:
   {{PROJECT_NAME}}
-  {{MIGRATION_TOOL}}         — Flyway, Liquibase, EF Core, Alembic, Prisma, etc.
-  {{MIGRATIONS_PATH}}        — ej. "db/migration/", "Migrations/", "alembic/versions/"
+  {{MIGRATION_TOOL}}         — Flyway, Liquibase, Alembic, Prisma, etc.
+  {{MIGRATIONS_PATH}}        — ej. "db/migration/", "alembic/versions/", "prisma/migrations/"
 -->
 
 # Modelo de Datos

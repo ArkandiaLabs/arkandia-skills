@@ -50,8 +50,7 @@ Glob the repo root and a couple levels deep. Map detected signals to stack notes
 | `application.properties`, `application.yml`, `bootstrap.yml` | Spring Boot / Spring Cloud |
 | `*.sbt`, `project/build.properties` | Scala / SBT |
 | `AndroidManifest.xml` + Kotlin `build.gradle.kts` | Kotlin / Android |
-| `*.csproj`, `*.sln`, `*.fsproj`, `*.vbproj`, `global.json`, `Directory.Build.props`, `nuget.config`, `appsettings.json` | .NET (ASP.NET Core, EF Core, F#, VB) |
-| `Migrations/*.Designer.cs` | Entity Framework Core migrations |
+| `*.csproj`, `*.sln`, `*.slnx`, `*.fsproj`, `*.vbproj`, `global.json`, `Directory.Build.props`, `nuget.config` | .NET (C#, F#, VB) |
 | `composer.json`, `composer.lock` | PHP |
 | `artisan`, `config/app.php` | Laravel |
 | `bin/console`, `symfony.lock`, `config/packages/` | Symfony |
@@ -72,6 +71,8 @@ Glob the repo root and a couple levels deep. Map detected signals to stack notes
 | `sonar-project.properties`, `checkstyle.xml`, `.editorconfig`, `.eslintrc*`, `ruff.toml`, `.rubocop.yml` | Quality gates |
 
 If multiple languages are detected, treat it as a polyglot monorepo — `architecture.md` should list each with its own subsection.
+
+**.NET note.** This skill stays language-neutral and only *detects* .NET — it does not analyze it deeply. If .NET signals appear, do not attempt csproj/solution/EF Core analysis here; instead, in Phase 2, tell the user a specialized .NET pack is available via `/arkandia:agent-context-dotnet` (run it after this skill for the solution/project graph, target frameworks, EF Core data access, DI, analyzers, and CI).
 
 ### 1c. Read the README
 
@@ -130,7 +131,7 @@ Rules for filling templates:
 - Short sentences. Sacrifice grammar for clarity.
 - If you don't have info for a section, leave a `<!-- TODO: fill in -->` marker — don't hallucinate.
 - For ADR seed content: use detected stack to propose 1–3 decisions that were clearly made (e.g., `adr-0001-language-framework.md` naming the language/framework, `adr-0002-deployment-target.md` if a Dockerfile or IaC was detected). Each ADR must include Status, Context (with alternatives considered), Decision, Consequences (easier / harder).
-- Architecture doc must name the detected framework + migration tool explicitly (e.g., "Spring Boot 3 + Flyway", "ASP.NET Core 8 + EF Core", "Laravel 11 + Doctrine").
+- Architecture doc must name the detected framework + migration tool explicitly (e.g., "Spring Boot 3 + Flyway", "Laravel 11 + Doctrine", "Django 5 + Alembic").
 
 ---
 
@@ -140,7 +141,7 @@ Generate `AGENTS.md` strictly as a **table of contents**:
 
 - Opening: 2 lines max (project name + one-line purpose).
 - Section **"Where to find things"**: bulleted list of every doc with a one-line description of each.
-- Section **"Commands"**: the 3–5 commands a developer runs most often (infer from `Makefile`, `package.json` scripts, `pom.xml` / `build.gradle` tasks, `composer.json` scripts, `*.csproj` targets, `manage.py`, `Rakefile`). If unsure, leave as TODO.
+- Section **"Commands"**: the 3–5 commands a developer runs most often (infer from `Makefile`, `package.json` scripts, `pom.xml` / `build.gradle` tasks, `composer.json` scripts, `manage.py`, `Rakefile`). If unsure, leave as TODO.
 - Section **"Non-obvious rules"**: populate with the user's Phase 2 answers. Format each as a bullet with a short rationale.
 - Section **"Testing"** and **"Code style"**: one paragraph each, referencing tools detected in Phase 1.
 - Section **"Security"**: generic bullets (no secrets in logs, `.env` not committed). Students can extend.
@@ -151,13 +152,26 @@ Enforce the ~80-line ceiling. If you exceed it, move content into a specialized 
 
 ---
 
-## Phase 5 — Verify
+## Phase 5 — Validate claims (Claimify-inspired)
+
+Generated docs hallucinate. Before finishing, surface the load-bearing factual claims you wrote and confirm the uncertain ones with the user. This step is adapted from Microsoft Research's **Claimify** — extract atomic, self-contained, verifiable claims, and **flag ambiguity instead of guessing**. Follow `references/claim-validation.md` in full. In short:
+
+1. **Select** the verifiable, load-bearing claims from the docs you just wrote (framework + version, persistence + provider + migration tool, deployment target, CI system, key entities, the 3–5 commands, the user's non-obvious rules). Skip TODOs, boilerplate, and opinions.
+2. **Atomize + tag provenance.** One self-contained statement each, with a source ref (`file:line` or `inferred`) and a confidence: `high` (read from a file), `medium` (one weak signal), `low` (guessed / unverified).
+3. **Flag ambiguity.** Mark any claim with more than one plausible reading or no clear source. Never silently keep a low-confidence claim.
+4. **Verify with the user.** Present a compact ledger; confirm/correct the `medium`/`low`/ambiguous claims (use `AskUserQuestion` for the top binary confirmations, plain chat for the rest). `high`-confidence claims with a concrete source are shown but not blocking.
+5. **Apply.** Write corrections into the docs. Downgrade any unconfirmed `low`-confidence claim to `<!-- TODO: verify -->` rather than asserting it.
+6. **Persist** the ledger to `docs/claims-ledger.md` (format in the reference) as an audit trail.
+
+---
+
+## Phase 6 — Verify
 
 1. Print a tree of files written (or augmented).
 2. Check that every link in AGENTS.md resolves to a file that exists (use Read).
 3. Remind the user:
    - Commit: `git add AGENTS.md CLAUDE.md docs/ && git commit -m "docs: bootstrap context pack for AI coding agents"`
-   - Next suggested step: fill in `<!-- TODO -->` markers and review ADRs.
+   - Next suggested step: fill in `<!-- TODO -->` markers, review ADRs, and skim `docs/claims-ledger.md` for anything still marked unverified.
    - Re-run `/arkandia:agent-context` later; it will augment, not overwrite.
 
 ---
@@ -165,6 +179,7 @@ Enforce the ~80-line ceiling. If you exceed it, move content into a specialized 
 ## Reference
 
 - `templates/en/` and `templates/es/` — doc skeletons.
+- `references/claim-validation.md` — the Claimify-inspired claim-validation procedure used in Phase 5.
 
 ## Rules
 

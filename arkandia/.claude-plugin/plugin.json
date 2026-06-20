@@ -1,7 +1,7 @@
 {
   "name": "arkandia",
   "version": "0.1.0",
-  "description": "Arkandia's toolkit of AI coding-agent skills. Currently ships `agent-context` — a skill that bootstraps a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for any repository.",
+  "description": "Arkandia's toolkit of AI coding-agent skills: `agent-context` bootstraps a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for any repository, and `agent-context-dotnet` adds a specialized .NET deep-dive (solution/project graph, target frameworks, EF Core, DI, analyzers, CI). Both validate the most important generated claims with you to reduce hallucinations.",
   "author": {
     "name": "Manuel Zapata",
     "email": "apps@arkandia.co"

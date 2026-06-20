@@ -1,0 +1,115 @@
+<!--
+Placeholders:
+  {{PROJECT_NAME}}
+  {{SOLUTION_FILES}}        — .sln / .slnx file name(s)
+  {{TARGET_FRAMEWORKS}}     — e.g. "net8.0 (api, core), net8.0-android/-ios (mobile)"
+  {{LANG_POSTURE}}          — e.g. "C# 12, nullable enabled, implicit usings"
+  {{EF_PROVIDER}}           — e.g. "SQL Server (EF Core 8)" or "none"
+  {{DI_CONTAINER}}          — e.g. "built-in (Program.cs)" or "Autofac"
+  {{SECRETS_STRATEGY}}      — e.g. "user-secrets (dev) + Azure Key Vault (prod)"
+Keep this file to .NET-shaped facts the generic docs can't hold. Do NOT restate architecture.md.
+Leave <!-- TODO --> where you couldn't read the answer. Delete sections that don't apply.
+-->
+
+# .NET Solution Guide — {{PROJECT_NAME}}
+
+Deep .NET context for AI coding agents. For the general picture see [architecture](./architecture.md),
+[data model](./data-model.md), and [infrastructure](./infrastructure.md).
+
+## 1. Solution & projects
+
+- **Solution file(s):** {{SOLUTION_FILES}}
+
+| Project | Type | TFM | Purpose |
+|---|---|---|---|
+| <!-- Acme.Api --> | <!-- Web API --> | <!-- net8.0 --> | <!-- one line --> |
+| | | | |
+
+**Project references** (layering):
+
+```mermaid
+flowchart LR
+  api[Acme.Api] --> core[Acme.Core]
+  core --> infra[Acme.Infrastructure]
+```
+
+<!-- TODO: replace with the real project-reference graph. -->
+
+## 2. Target frameworks & language
+
+- **Target framework(s):** {{TARGET_FRAMEWORKS}}
+- **Language posture:** {{LANG_POSTURE}}
+- **Pinned SDK / shared build props:** <!-- TODO: global.json, Directory.Build.props if any -->
+
+## 3. Key NuGet dependencies
+
+<!-- TODO: highlight the load-bearing packages only (not the full list). -->
+
+| Package | Version | Role |
+|---|---|---|
+| <!-- Microsoft.EntityFrameworkCore.SqlServer --> | | <!-- ORM --> |
+| | | |
+
+- **Dependency health:** <!-- TODO: note version freshness / known-vuln risk only if you have a concrete signal. -->
+
+## 4. Composition root / DI
+
+- **Container:** {{DI_CONTAINER}}
+- **Registration lives in:** <!-- TODO: Program.cs / Startup.cs / *Extensions / Autofac modules -->
+- **Conventions / notable lifetimes:** <!-- TODO: scoped DbContext, hosted services, options pattern, assembly scanning... -->
+
+## 5. Data access (EF Core)
+
+- **Provider:** {{EF_PROVIDER}}
+- **DbContext:** <!-- TODO: class + path. Flag if very large. -->
+- **Model configuration:** <!-- TODO: data annotations / Fluent API / IEntityTypeConfiguration -->
+- **Migrations:** <!-- TODO: path + how applied (dotnet ef / Migrate() on startup / CI). Cross-link data-model.md -->
+
+## 6. Configuration & secrets
+
+- **Config layering:** <!-- TODO: appsettings.json -> appsettings.{Env}.json -> user-secrets/env -> Key Vault -->
+- **Secrets strategy:** {{SECRETS_STRATEGY}}
+- **⚠ Committed secrets:** <!-- TODO: list any secret found committed (do NOT paste the value); recommend user-secrets / Key Vault + appsettings.example.json. Delete this line if none. -->
+
+## 7. Build, run, test
+
+```bash
+# TODO: keep the 3-6 commands developers actually run
+dotnet build
+dotnet run --project <main project>
+dotnet test
+dotnet ef migrations add <Name> --project <db project>
+```
+
+- **Test framework(s):** <!-- TODO: xUnit / NUnit / MSTest -->
+- **Test organization:** <!-- TODO: by layer / by domain / integration vs unit vs automation -->
+
+## 8. Quality gates
+
+| Gate | Status | Notes |
+|---|---|---|
+| `.editorconfig` | <!-- present/absent --> | |
+| Roslyn analyzers (StyleCop / NetAnalyzers) | <!-- present/absent --> | |
+| Architecture linting (NsDepCop / ArchUnitNET) | <!-- present/absent --> | |
+| Warnings as errors | <!-- present/absent --> | |
+
+<!-- TODO: where absent, recommend adopting it to enforce the layering in §1. -->
+
+## 9. UI / platform
+
+<!-- TODO: keep only what applies; delete if headless. -->
+
+- **UI stack:** <!-- Razor Pages / MVC / Blazor / MAUI -->
+- **Platform-specific wiring (MAUI):** <!-- Platforms/Android & Platforms/iOS services, handlers, deep links -->
+
+## 10. Gotchas / hotspots
+
+<!-- TODO: the non-obvious things that trip up an agent editing this solution. Examples:
+- DbContext is ~9k LOC — split changes carefully.
+- Service methods are async but don't thread CancellationToken — follow the existing pattern.
+- Project X must not reference project Y (see ADRs).
+-->
+
+## Related docs
+
+- [Architecture](./architecture.md) · [Data model](./data-model.md) · [Infrastructure](./infrastructure.md) · [Decisions](./adrs/)

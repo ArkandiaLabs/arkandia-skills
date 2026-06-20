@@ -3,8 +3,8 @@ Placeholders:
   {{PROJECT_NAME}}
   {{STACK_SUMMARY}}         — ej. "Spring Boot 3 + PostgreSQL + Flyway, desplegado en AWS ECS"
   {{DETECTED_LANGUAGES}}    — lista de lenguajes primarios detectados en Fase 1
-  {{DETECTED_FRAMEWORK}}    — framework principal (Spring Boot, ASP.NET Core, Laravel, Django...)
-  {{DETECTED_PERSISTENCE}}  — BD + herramienta de migraciones (PostgreSQL + Flyway, SQL Server + EF Core...)
+  {{DETECTED_FRAMEWORK}}    — framework principal (Spring Boot, Laravel, Django, Rails...)
+  {{DETECTED_PERSISTENCE}}  — BD + herramienta de migraciones (PostgreSQL + Flyway, MySQL + Liquibase...)
   {{DETECTED_DEPLOYMENT}}   — contenedor, serverless, VM, etc.
 -->
 
