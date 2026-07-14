@@ -2,7 +2,13 @@
 
 > *La IA no lee tu mente. Lee archivos.*
 
-Una colección de skills para agentes de código de IA, desde Arkandia. Hoy son dos skills: **`agent-context`** genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio, y **`agent-context-dotnet`** agrega encima un análisis profundo especializado en .NET. Ambos terminan validando contigo las afirmaciones más importantes que generaron, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto. Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
+Una colección de skills para agentes de código de IA, desde Arkandia, en dos familias.
+
+**Contexto** — **`agent-context`** genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio, y **`agent-context-dotnet`** agrega encima un análisis profundo especializado en .NET. Ambos terminan validando contigo las afirmaciones más importantes que generaron, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto.
+
+**Entrega** — **`plan-and-build`** lleva un brief de feature pequeña desde *léelo* hasta *implementado, gates en verde, listo para commit* a través de una cadena explícita y enseñable (explorar → planear → revisión adversarial → tu aprobación → construir con tests primero → gates → commit), una fase a la vez, y **`plan-and-build-dotnet`** conecta esa misma cadena con work items de Azure Boards y gates de .NET/Make.
+
+Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
 
 **[English version →](./README.md)**
 
@@ -60,6 +66,8 @@ Para repositorios .NET, continúa con el especialista (córrelo después de `age
 /arkandia:agent-context-dotnet es   # Salida en español
 ```
 
+Para llevar una feature desde un brief hasta un commit, mira [Plan → Build](#plan--build) más abajo.
+
 El skill `agent-context` va a:
 
 1. **Descubrir** — escanea el repo buscando lenguaje, framework, persistencia, CI, IaC y docs existentes. Soporta Java (Maven/Gradle/Spring), PHP (Laravel/Symfony/WordPress), Python, Node, Go, Ruby, Rust, .NET, y señales de infra empresarial (Liquibase, Flyway, Jenkins, Azure DevOps, Kubernetes, Terraform). Cuando detecta .NET te remite a `agent-context-dotnet` para un análisis más profundo.
@@ -95,6 +103,35 @@ Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone ad
 Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. Los skills no van a inventar versiones de framework, detalles de esquema, ni contexto de negocio que no puedan verificar — y el paso de validación de afirmaciones te pide confirmar los hechos clave antes de que confíes en ellos.
 
 `agent-context-dotnet` funciona mejor junto a `agent-context` (instalar el plugin/repo trae ambos), pero también funciona **por su cuenta**: si no existe un paquete base, produce `docs/dotnet.md` más un `AGENTS.md` mínimo para que el análisis profundo siga siendo accesible.
+
+## Plan → Build
+
+Donde `agent-context` *escribe* el contexto de tu repo, `plan-and-build` lo *consume* para entregar un cambio. Dale un brief corto de la feature — un archivo Markdown o una descripción en línea — y maneja el trabajo **una fase a la vez**, deteniéndose después de cada una para que mantengas el control:
+
+```
+/arkandia:plan-and-build "agrega un flag --dry-run al comando de exportación"
+/arkandia:plan-and-build docs/briefs/dry-run.md
+```
+
+Para repositorios .NET en Azure DevOps, el especialista además acepta un id de work item de Boards y corre gates de .NET/Make (`make check`, `dotnet test`, ArchUnitNET), enlazando el commit de vuelta al item:
+
+```
+/arkandia:plan-and-build-dotnet 42        # un work item de Azure Boards
+/arkandia:plan-and-build-dotnet docs/briefs/dry-run.md
+```
+
+La cadena, cada fase con tu visto bueno:
+
+1. **Leer el brief** — desde un archivo, texto en línea o (en el especialista .NET) un work item de Azure Boards; reformula el objetivo.
+2. **Explorar** — despliega subagentes de solo lectura por las áreas que toca la feature y arma un solo mapa; lee tu `AGENTS.md` / `docs/` para conocer las convenciones si existen.
+3. **Redactar el plan** — pasos pequeños, cada uno con su propia verificación; el primer paso es un test que falla.
+4. **Revisión adversarial** — tres subagentes critican el plan desde distintos lentes (convenciones, correctitud, alcance) *antes* de escribir código.
+5. **Tu aprobación** — el plan revisado se somete vía plan mode; no se construye nada hasta que apruebes.
+6. **Implementar con tests primero** — RED → GREEN por paso, paralelizando solo donde las ediciones no chocan.
+7. **Gates** — corre el comando de gate propio de tu repo más `/code-review`; nunca avances en rojo.
+8. **Commit** — agrega solo lo que cambió, referenciando el brief.
+
+A diferencia de los skills de contexto, `plan-and-build` escribe código, no docs — así que no tiene registro de afirmaciones; la correctitud se prueba con la revisión adversarial y el gate real.
 
 ## Agradecimientos
 
