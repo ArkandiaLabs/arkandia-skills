@@ -11,7 +11,7 @@ description: >
   Invoke with `/arkandia:plan-and-build [brief.md | inline description]`.
 argument-hint: "[brief-file.md | inline description]"
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(make *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv *), Bash(go *), Bash(cargo *), Bash(dotnet *), Bash(mvn *), Bash(gradle *), Bash(./gradlew*), Bash(bundle *), Bash(rake *), Bash(composer *), Bash(php *), Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode
 ---
 
 # Plan → Build
@@ -36,8 +36,11 @@ Two things make this workflow legible on purpose:
 
 `$ARGUMENTS` is one of two things. Resolve it in this order:
 
-1. **Brief file** — a path ending in `.md`. Read it.
-2. **Inline description** — anything else. Use it as the brief.
+1. **Brief file** — a single path ending in `.md` that **exists and is readable**.
+   Read it. (If it looks like a path but the file isn't there, say so instead of
+   guessing.)
+2. **Inline description** — anything else, including free text that merely mentions a
+   `.md` filename (e.g. "update the steps in README.md"). Use it as the brief.
 
 If `$ARGUMENTS` is empty, ask for the feature. If a brief is present but too thin to
 act on (no observable behavior, no acceptance criteria), say so and ask for the
@@ -90,11 +93,11 @@ you resolved it from (`example-brief-...md`, inline).
    > error-handling style, layering and dependency rules, where validation belongs,
    > naming, and any non-obvious rule the docs call out. Flag any step that would
    > violate an established pattern or put logic in the wrong place.
-
+   >
    > **Correctness lens.** Hunt for unhandled edge cases and wrong behavior: inputs
    > the plan never validates, states it never reaches, tests that would pass while
    > the bug survives. For each, give the concrete input and the wrong result.
-
+   >
    > **Scope lens.** Find what is missing and what does not belong: steps absent from
    > the plan that the acceptance criteria demand, steps present that no criterion
    > asks for, and anything requiring a migration or a product decision the brief
@@ -189,5 +192,9 @@ you resolved it from (`example-brief-...md`, inline).
   critiquing, where the work is independent and read-only. They cost correctness on
   writing, where it usually isn't. When in doubt, fan out the analysis and keep the
   edits serial.
+- **Running the gate.** The mainstream test/build runners (`make`, `npm`/`pnpm`/`yarn`,
+  `pytest`, `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are
+  pre-authorized. If your repo's gate command isn't among them, run it and approve the
+  permission prompt — never skip or fake the gate to avoid the prompt.
 - **Keep secrets out of the shell and the commit.** Don't stage `.env` files, keys, or
   tokens, and don't echo secret values into commands or commit messages.

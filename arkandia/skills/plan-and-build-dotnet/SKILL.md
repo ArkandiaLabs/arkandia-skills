@@ -51,8 +51,10 @@ read that skill for the full rationale. Below are only the deltas.
    `System.Description` (and acceptance criteria, where present) come back as **HTML**,
    not Markdown — render to text before reasoning over them, and don't let stray tags
    leak into the plan.
-2. **Brief file** — a path ending in `.md`. Read it.
-3. **Inline description** — anything else.
+2. **Brief file** — a single path ending in `.md` that exists and is readable. Read it
+   (if it looks like a path but isn't there, say so instead of guessing).
+3. **Inline description** — anything else, including free text that merely mentions a
+   `.md` filename.
 
 Two failure modes to handle rather than paper over. If the work-item fetch fails,
 **stop and report the error verbatim** — do not invent a brief from the id alone, and
