@@ -8,7 +8,7 @@
     {
       "name": "arkandia",
       "source": "./arkandia",
-      "description": "Arkandia's toolkit of AI coding-agent skills: `agent-context` generates AGENTS.md and supporting docs (architecture, ADRs, data model, infrastructure) for any repository; `agent-context-dotnet` adds a specialized .NET deep-dive. Both validate key generated claims with you to cut hallucinations. Supports Java, .NET, PHP, Python, Node, Go, Rust, Ruby. English or Spanish output."
+      "description": "Arkandia's toolkit of AI coding-agent skills. `agent-context` generates AGENTS.md and supporting docs (architecture, ADRs, data model, infrastructure) for any repository, and `agent-context-dotnet` adds a specialized .NET deep-dive — both validate key generated claims with you to cut hallucinations. `plan-and-build` drives a small feature brief from read → explore → plan → adversarial review → your approval → test-first build → gates → commit, one phase at a time, and `plan-and-build-dotnet` adds Azure Boards work items and .NET/Make gates. Supports Java, .NET, PHP, Python, Node, Go, Rust, Ruby. English or Spanish output."
     }
   ]
 }
