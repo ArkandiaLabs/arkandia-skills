@@ -1,6 +1,6 @@
 ---
 name: agent-context-dotnet
-description: Generate a documentation pack for a .NET repository so AI coding agents can reason about it — AGENTS.md, architecture, ADRs, data model, infrastructure, plus a `docs/dotnet.md` deep-dive covering the solution/project graph, target frameworks and their support status, EF Core data access, DI, configuration & secrets, analyzers, and CI. Invoke with `/arkandia:agent-context-dotnet [en|es]`.
+description: Generate a documentation pack for a .NET repository so AI coding agents can reason about it — AGENTS.md, architecture, ADRs, data model, infrastructure, plus a `docs/dotnet.md` deep-dive covering the solution/project graph, target frameworks, EF Core data access, DI, configuration & secrets, analyzers, and CI. Invoke with `/arkandia:agent-context-dotnet [en|es]`.
 argument-hint: '[en|es]'
 disable-model-invocation: true
 ---
@@ -12,9 +12,9 @@ unfamiliar .NET repository legible to an AI coding agent. It has two halves, pro
 
 - the **base pack** — `AGENTS.md`, `CLAUDE.md`, and `docs/` (business, architecture, data model,
   infrastructure, ADRs);
-- the **.NET deep-dive** — `docs/dotnet.md`: the solution/project graph, target frameworks and
-  their support status, package management, EF Core data access, the DI composition root,
-  configuration & secrets, analyzer posture, the UI/API surface, packaging, and CI.
+- the **.NET deep-dive** — `docs/dotnet.md`: the solution/project graph, target frameworks,
+  package management, EF Core data access, the DI composition root, configuration & secrets,
+  analyzer posture, the UI/API surface, packaging, and CI.
 
 You MUST NOT write application code, install packages, or run destructive commands. Your only
 outputs are Markdown files at the repo root and under `docs/`.
@@ -80,7 +80,7 @@ When pre-existing docs are in one language, prefer matching it in Phase 2's lang
 ### 1c. Deep .NET discovery
 
 Run the full checklist in `references/dotnet-inspection.md`. It covers the solution/project graph,
-target frameworks **and their support status**, package management (including central package
+target frameworks, package management (including central package
 management), Aspire orchestration, data access, DI, configuration & secrets, build/run/test
 including the test-platform split, quality gates, the UI/API surface, deployment & packaging,
 cross-cutting concerns, the C# language posture, and hotspots.
@@ -149,10 +149,9 @@ needs two batched calls. Long-form answers don't fit it at all — ask those in 
 7. **Auth / identity model** — only if ambiguous from the packages. Options:
    `Entra ID (Microsoft.Identity.Web)`, `ASP.NET Core Identity`, `IdentityServer / Duende`,
    `Other`.
-8. **Framework-currency posture** — ask when Phase 1 found a project on a target framework that is
-   out of support or near end of support. Options: `Upgrade to current LTS planned`,
-   `Upgrade in progress`, `Staying put for now`, `Not decided`. The answer decides whether this
-   becomes an ADR, a gotcha, or a plain note — do not decide it yourself.
+8. **Path to production** — how a merge reaches the deployment target: `CI deploys on merge to
+   main`, `Tag / release triggers deploy`, `Manual release`, `Other`. Feeds `infrastructure.md`;
+   the pipeline file often shows the build but not the promotion path.
 
 ### 2c. Free-text answers — ask in plain chat
 
@@ -223,8 +222,6 @@ alternatives considered), Decision, and Consequences (easier / harder). Good can
 - `adr-0001-target-framework.md` — the target framework the solution standardizes on.
 - Data access — EF Core (and the provider) as the persistence approach.
 - Deployment target, if a Dockerfile, IaC, or SDK container properties were detected.
-- A **framework upgrade** ADR — only when Phase 1 found an out-of-support target framework *and*
-  the user answered the framework-currency question with a planned or in-progress upgrade.
 
 Never fabricate the rationale for an ADR.
 
@@ -267,8 +264,8 @@ and confirm the uncertain ones with the user. This step is adapted from Microsof
 **Claimify** — extract atomic, self-contained, verifiable claims, and **flag ambiguity instead of
 guessing**. Follow `references/claim-validation.md` in full. In short:
 
-1. **Select** the verifiable, load-bearing claims from the docs you just wrote: target frameworks
-   **and their support status**, the persistence provider and migration workflow, the deployment
+1. **Select** the verifiable, load-bearing claims from the docs you just wrote: target frameworks,
+   the persistence provider and migration workflow, the deployment
    target, the CI system, key entities, the commands, package versions, DI lifetimes, and the
    user's non-obvious rules. Skip TODOs, boilerplate, and opinions.
 2. **Atomize + tag provenance.** One self-contained statement each, with a source ref
@@ -298,8 +295,6 @@ guessing**. Follow `references/claim-validation.md` in full. In short:
    - If quality gates were absent, consider adopting `.editorconfig` + analyzers
      (`StyleCop.Analyzers`, `Microsoft.CodeAnalysis.NetAnalyzers`) and an arch-linting tool
      (`NsDepCop` / `ArchUnitNET`) to enforce the layering the docs describe.
-   - If a project is on an out-of-support target framework, that is the highest-value follow-up —
-     point at the gotcha in `docs/dotnet.md`.
    - Re-run `/arkandia:agent-context-dotnet` later; it will augment, not overwrite.
 
 ---
@@ -316,7 +311,7 @@ guessing**. Follow `references/claim-validation.md` in full. In short:
 - Do NOT overwrite existing docs without explicit user opt-in; enrich by filling TODOs or
   appending clearly marked sections.
 - Do NOT fabricate framework or package versions, providers, endpoint names, or schema you
-  haven't read. This includes support dates — read the target framework, then check.
+  haven't read.
 - DO leave `<!-- TODO -->` markers where human input is needed, and delete sections that don't
   apply rather than padding them.
 - DO keep every doc focused: each has one job, delegated from AGENTS.md.

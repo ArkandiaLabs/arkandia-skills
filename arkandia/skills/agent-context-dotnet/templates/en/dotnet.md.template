@@ -3,7 +3,6 @@ Placeholders:
   {{PROJECT_NAME}}
   {{SOLUTION_FILES}}        — .sln / .slnx file name(s)
   {{TARGET_FRAMEWORKS}}     — e.g. "net10.0 (api, core), net10.0-android/-ios (mobile)"
-  {{TFM_SUPPORT_STATUS}}    — e.g. "net10.0 — LTS, supported to Nov 2028" or "net8.0 — end of support Nov 10, 2026 ⚠"
   {{LANG_POSTURE}}          — e.g. "C# 14, nullable enabled, implicit usings"
   {{PACKAGE_MANAGEMENT}}    — e.g. "central (Directory.Packages.props)" or "per-project"
   {{EF_PROVIDER}}           — e.g. "SQL Server (EF Core 10)" or "none"
@@ -43,11 +42,8 @@ flowchart LR
 ## 2. Target frameworks & language
 
 - **Target framework(s):** {{TARGET_FRAMEWORKS}}
-- **Support status:** {{TFM_SUPPORT_STATUS}}
 - **Language posture:** {{LANG_POSTURE}}
 - **Pinned SDK / shared build props:** <!-- TODO: global.json, Directory.Build.props if any -->
-
-<!-- If any project is on an out-of-support framework, say so here in one line and repeat it in §11. -->
 
 ## 3. Package management & dependencies
 
@@ -151,7 +147,6 @@ dotnet ef migrations add <Name> --project <db project>
 ## 13. Gotchas / hotspots
 
 <!-- TODO: the non-obvious things that trip up an agent editing this solution. Examples:
-- Project X targets net8.0 — out of support Nov 10, 2026. Upgrade before adding surface area.
 - DbContext is ~9k LOC — split changes carefully.
 - Service methods are async but don't thread CancellationToken — follow the existing pattern.
 - PublishAot is on: no reflection-based serialization.

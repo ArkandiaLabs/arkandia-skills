@@ -27,10 +27,6 @@ Re-read the docs you just wrote. Extract only **factual, verifiable** statements
 Prioritize the claims that an agent will act on and that are expensive if wrong:
 
 - Primary language(s), framework, and **version** — the target framework moniker per project.
-- **Support status of each target framework.** Treat the TFM you read and the support window as
-  two separate claims: the first is `high` from the project file, the second is at best `medium`
-  unless you checked it. Support dates age; an out-of-support flag that turns out to be wrong is
-  expensive in both directions.
 - Persistence: database engine + EF Core provider + migration workflow.
 - Deployment target and CI system, including whether images come from a Dockerfile or the SDK.
 - The 3–6 most-run developer commands — especially the run command when Aspire is involved and

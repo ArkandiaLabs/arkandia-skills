@@ -3,7 +3,6 @@ Placeholders:
   {{PROJECT_NAME}}
   {{SOLUTION_FILES}}        — nombre(s) de archivo .sln / .slnx
   {{TARGET_FRAMEWORKS}}     — ej. "net10.0 (api, core), net10.0-android/-ios (mobile)"
-  {{TFM_SUPPORT_STATUS}}    — ej. "net10.0 — LTS, con soporte hasta nov 2028" o "net8.0 — fin de soporte el 10 de nov de 2026 ⚠"
   {{LANG_POSTURE}}          — ej. "C# 14, nullable habilitado, implicit usings"
   {{PACKAGE_MANAGEMENT}}    — ej. "centralizada (Directory.Packages.props)" o "por proyecto"
   {{EF_PROVIDER}}           — ej. "SQL Server (EF Core 10)" o "ninguno"
@@ -44,11 +43,8 @@ flowchart LR
 ## 2. Target frameworks y lenguaje
 
 - **Target framework(s):** {{TARGET_FRAMEWORKS}}
-- **Estado de soporte:** {{TFM_SUPPORT_STATUS}}
 - **Postura del lenguaje:** {{LANG_POSTURE}}
 - **SDK fijado / props de build compartidas:** <!-- TODO: global.json, Directory.Build.props si existen -->
-
-<!-- Si algún proyecto está en un framework sin soporte, dilo aquí en una línea y repítelo en §13. -->
 
 ## 3. Gestión de paquetes y dependencias
 
@@ -153,7 +149,6 @@ dotnet ef migrations add <Nombre> --project <proyecto de BD>
 ## 13. Trampas / puntos calientes
 
 <!-- TODO: lo no obvio que hace tropezar a un agente editando esta solución. Ejemplos:
-- El proyecto X usa net8.0 — sin soporte desde el 10 de nov de 2026. Actualiza antes de agregar superficie.
 - El DbContext tiene ~9k LOC — divide los cambios con cuidado.
 - Los métodos son async pero no propagan CancellationToken — sigue el patrón existente.
 - PublishAot está activo: nada de serialización por reflexión.

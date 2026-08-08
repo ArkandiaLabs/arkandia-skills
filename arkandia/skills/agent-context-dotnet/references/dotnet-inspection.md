@@ -37,7 +37,7 @@ long hedged one.
 - **Record:** a project table (name · type · TFM · one-line purpose) and a small Mermaid graph of
   the project references.
 
-## 2. Target frameworks, language & support status
+## 2. Target frameworks & language
 
 - **Read:** each `*.csproj`; `Directory.Build.props` / `Directory.Build.targets` (shared settings);
   `global.json` (pinned SDK).
@@ -46,28 +46,6 @@ long hedged one.
   `<TreatWarningsAsErrors>`, `<UserSecretsId>`.
 - **Record:** the TFM(s), the C# language posture (nullable on/off, implicit usings), and any
   pinned SDK. Flag inconsistent TFMs across projects (an ambiguity for claim validation).
-
-### Support status — record it, don't skip it
-
-A target framework is not just a number; it has a support window, and an out-of-support runtime is
-usually the single most actionable fact about a legacy repo. Reference points **as verified in
-August 2026**:
-
-| Release | Track | End of support |
-|---|---|---|
-| .NET 10 | LTS | November 2028 |
-| .NET 9 | STS | **November 10, 2026** |
-| .NET 8 | LTS | **November 10, 2026** |
-| .NET 11 | STS | expected November 2026 (not shipped as of this writing) |
-
-- .NET Framework 4.x follows a **separate** lifecycle tied to the OS — do not apply the table above
-  to it.
-- **This table ages.** It is a prompt to check, not a source of truth. Record the TFM you actually
-  read from the project file with high confidence; treat the support claim as `medium` unless you
-  verified it, and never assert a date you did not check.
-- **Flag** any project on a framework that is out of support, or within roughly six months of end
-  of support, as a **gotcha** in `docs/dotnet.md`. It also drives the framework-currency interview
-  question, and — if the user says an upgrade is planned or underway — a seed ADR.
 
 ## 3. Package management & dependencies
 
@@ -257,8 +235,7 @@ images with no Dockerfile at all.
   repo's idiom rather than introduce it** — sprinkling `field`-backed properties into a codebase
   that uses explicit backing fields is noise, not modernization.
 - **Record:** a short "gotchas" list — the non-obvious things that will trip up an agent editing
-  this solution. Fold in the out-of-support TFM flag from §2 and the AOT/trimming constraints from
-  §11 if they apply.
+  this solution. Fold in the AOT/trimming constraints from §11 if they apply.
 
 ## 14. File-based apps (skip if absent)
 
