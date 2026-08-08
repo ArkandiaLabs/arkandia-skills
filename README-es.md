@@ -6,7 +6,7 @@ Una colección de skills para agentes de código de IA, desde Arkandia, en dos f
 
 **Contexto** — **`agent-context-dotnet`** genera un paquete de documentación mínimo y bien estructurado para un repositorio .NET (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) más un análisis profundo en `docs/dotnet.md`, y termina validando contigo las afirmaciones más importantes que generó, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto.
 
-**Entrega** — **`plan-and-build`** lleva un brief de feature pequeña desde *léelo* hasta *implementado, gates en verde, listo para commit* a través de una cadena explícita y enseñable (explorar → planear → revisión adversarial → tu aprobación → construir con tests primero → gates → commit), una fase a la vez, y **`plan-and-build-dotnet`** conecta esa misma cadena con work items de Azure Boards y gates de .NET/Make.
+**Entrega** — **`linear-plan-build`** y **`ado-plan-build`** llevan un ticket desde *léelo* hasta *PR abierto, CI en verde, comentarios de revisión atendidos, tracker actualizado*. Comparten un mismo motor — te interrogan sobre las decisiones de diseño que el ticket dejó abiertas → explorar → planear → revisión adversarial → tu aprobación (solo cuando el cambio lo amerita) → construir con tests primero → los gates propios de tu repo → PR → cuidar el CI hasta el verde — y difieren solo en sus conexiones: **Linear + GitHub** uno, **Azure Boards + Azure Repos + Pipelines** el otro. Ambos son agnósticos del stack y no asumen ninguna arquitectura.
 
 Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por [`skills.sh`](https://skills.sh).
 
@@ -59,7 +59,7 @@ Dentro de cualquier repositorio .NET:
 /arkandia:agent-context-dotnet es   # Salida en español
 ```
 
-Para llevar una feature desde un brief hasta un commit, mira [Plan → Build](#plan--build) más abajo.
+Para llevar un ticket desde el tracker hasta un PR en verde, mira [Plan → Build](#plan--build) más abajo.
 
 El skill va a:
 
@@ -97,32 +97,43 @@ Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. E
 
 ## Plan → Build
 
-Donde `agent-context-dotnet` *escribe* el contexto de tu repo, `plan-and-build` lo *consume* para entregar un cambio. Dale un brief corto de la feature — un archivo Markdown o una descripción en línea — y maneja el trabajo **una fase a la vez**, deteniéndose después de cada una para que mantengas el control:
+Donde `agent-context-dotnet` *escribe* el contexto de tu repo, los skills de entrega lo *consumen* para entregar un cambio. Dale a uno el id de un ticket y corre hasta un PR en verde:
 
 ```
-/arkandia:plan-and-build "agrega un flag --dry-run al comando de exportación"
-/arkandia:plan-and-build docs/briefs/dry-run.md
+/arkandia:linear-plan-build ABC-123                 # un issue de Linear
+/arkandia:linear-plan-build ABC-123 skip-checkpoint # issue de rutina: sin parada de aprobación
+/arkandia:ado-plan-build 42                         # un work item de Azure Boards
 ```
 
-Para repositorios .NET en Azure DevOps, el especialista además acepta un id de work item de Boards y corre gates de .NET/Make (`make check`, `dotnet test`, ArchUnitNET), enlazando el commit de vuelta al item:
+La cadena que corren ambos skills:
 
-```
-/arkandia:plan-and-build-dotnet 42        # un work item de Azure Boards
-/arkandia:plan-and-build-dotnet docs/briefs/dry-run.md
-```
+1. **Leer el ticket** — el issue o work item, sus subissues/hijos y su discusión. Los requerimientos casi siempre se negocian en los comentarios, no se escriben en un campo.
+2. **Interrogarte** — el skill pregunta por las decisiones de diseño que el ticket dejó abiertas: límite del alcance, modelo de datos y migraciones, contrato y cambios que rompen, comportamiento ante fallas, autorización, escala, rollout, profundidad de los tests. Pregunta solo lo que el ticket, el código y tu `AGENTS.md` no responden ya. Las respuestas quedan como **Decisiones**; lo que resolvió por su cuenta queda escrito como **Supuesto**.
+3. **Explorar** — despliega subagentes de solo lectura por las costuras propias de tu repo y arma un solo mapa. No asume ninguna arquitectura ni recomienda adoptar una.
+4. **Redactar el plan** — pasos pequeños, cada uno con su verificación en los comandos de tu repo; el primer paso es un test que falla.
+5. **Revisión adversarial** — tres subagentes critican el plan desde distintos lentes (convenciones, correctitud, alcance) *antes* de escribir código. El lente de alcance ataca específicamente la lista de Supuestos.
+6. **Tu aprobación — solo si el cambio lo amerita.** El plan mode se abre para cualquier cosa de más de ~3 pasos o ~3 archivos, o que toque un contrato, un esquema, autorización o dinero, o que se apoye en supuestos, o que sea difícil de revertir. Los cambios pequeños, reversibles y bien especificados imprimen el plan y siguen.
+7. **Implementar con tests primero** — RED → GREEN por paso, paralelizando solo donde las ediciones no chocan.
+8. **Gates** — resuelve los comandos de gate propios de tu repo (una sección de Gates/Comandos en `CLAUDE.md`/`AGENTS.md` → detección por manifiesto → preguntarte), luego `/code-review`, más `/security-review` cuando el diff toca autorización, secretos o parseo de entrada. Nunca avanza en rojo. Los gates que tu repo no define se reportan como omitidos, no se cuentan en silencio como verdes.
+9. **Commit, push y abrir el PR** — agregando solo lo que cambió, con el token de enlace del tracker en el mensaje (`ABC-123`, `AB#42`).
+10. **Cuidar el PR hasta el verde** — observa el CI, reintenta una vez un job flaky, arregla las fallas reales en su origen, y luego atiende los comentarios de revisión en ciclo hasta que el PR esté verde y limpio. Se detiene tras tres intentos fallidos sobre el mismo job.
+11. **Cerrar** — publica el resumen en el tracker y mueve el ticket a su estado de revisión.
 
-La cadena, cada fase con tu visto bueno:
+Prerrequisitos: el [servidor MCP de Linear](https://linear.app/docs/mcp) y `gh` para `linear-plan-build`; el servidor MCP de Azure DevOps **o** la CLI `az` con la extensión `azure-devops` para `ado-plan-build` (detecta cuál y te lo dice).
 
-1. **Leer el brief** — desde un archivo, texto en línea o (en el especialista .NET) un work item de Azure Boards; reformula el objetivo.
-2. **Explorar** — despliega subagentes de solo lectura por las áreas que toca la feature y arma un solo mapa; lee tu `AGENTS.md` / `docs/` para conocer las convenciones si existen.
-3. **Redactar el plan** — pasos pequeños, cada uno con su propia verificación; el primer paso es un test que falla.
-4. **Revisión adversarial** — tres subagentes critican el plan desde distintos lentes (convenciones, correctitud, alcance) *antes* de escribir código.
-5. **Tu aprobación** — el plan revisado se somete vía plan mode; no se construye nada hasta que apruebes.
-6. **Implementar con tests primero** — RED → GREEN por paso, paralelizando solo donde las ediciones no chocan.
-7. **Gates** — corre el comando de gate propio de tu repo más `/code-review`; nunca avances en rojo.
-8. **Commit** — agrega solo lo que cambió, referenciando el brief.
+**Lo que están pre-autorizados a hacer, para que decidas si es demasiado:** leer y escribir archivos, correr los comandos de build/test de tu repo, escribir en *el único ticket que están trabajando*, hacer push de su rama y abrir un PR. Nunca hacen merge ni completan un PR, nunca saltan una branch policy, nunca despliegan, y nunca escriben nada más en tu tracker. Omite `skip-checkpoint` y detente en el checkpoint de aprobación si quieres la correa más corta.
 
-A diferencia de los skills de contexto, `plan-and-build` escribe código, no docs — así que no tiene registro de afirmaciones; la correctitud se prueba con la revisión adversarial y el gate real.
+A diferencia de los skills de contexto, estos escriben código, no docs — así que no tienen registro de afirmaciones; la correctitud se prueba con la revisión adversarial y el gate real.
+
+### Renombrados en 0.3.0
+
+| Antes | Ahora |
+|---|---|
+| `agent-context` + `agent-context-dotnet` (paquete base y luego el análisis .NET) | solo `agent-context-dotnet` — los dos se fusionaron en una sola corrida |
+| `plan-and-build` (brief en Markdown, paraba en el commit) | `linear-plan-build` (issue de Linear → PR en verde) |
+| `plan-and-build-dotnet` (.NET + Clean Architecture + Azure Boards) | `ado-plan-build` (Azure Boards → PR en verde, agnóstico del stack y de la arquitectura) |
+
+Los nombres viejos desaparecieron, no quedaron como alias. Con ellos cambiaron dos comportamientos: se retiró el camino sin tracker (un brief `.md` o texto en línea) — ambos skills arrancan ahora desde un ticket — y `ado-plan-build` ya no revisa ni sugiere Clean Architecture, gates específicos de `dotnet`, ni ningún patrón arquitectónico con nombre.
 
 ## Agradecimientos
 
