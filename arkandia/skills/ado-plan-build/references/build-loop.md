@@ -72,10 +72,10 @@ Step A is **not** skippable. The `skip-checkpoint` argument governs Step E only.
 
 ## Step B — Explore
 
-1. **Conventions first.** Read `AGENTS.md`, `CLAUDE.md`, or a `docs/` context pack
-   (for example one produced by `/arkandia:agent-context`) — that is the fastest path
-   to this repo's patterns, commands, and non-obvious rules. If none exists, infer the
-   conventions from the code as you go and treat the inference as provisional.
+1. **Conventions first.** Read `AGENTS.md`, `CLAUDE.md`, or a `docs/` context pack —
+   that is the fastest path to this repo's patterns, commands, and non-obvious rules.
+   If none exists, infer the conventions from the code as you go and treat the
+   inference as provisional.
 
 2. **Do not assume an architecture.** Clean Architecture, hexagonal, MVC, layered,
    modular monolith — read what this repo actually does and follow it. Never plan

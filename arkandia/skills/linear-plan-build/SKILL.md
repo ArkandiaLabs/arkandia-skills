@@ -138,6 +138,7 @@ the review-comment half of Step I; an absent CI is not a green CI.
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
-- **Companion skills.** `/arkandia:agent-context` writes the `AGENTS.md` / `docs/` pack
-  this skill reads for conventions. `/arkandia:ado-plan-build` is the same workflow
-  bound to Azure Boards, Azure Repos, and Azure Pipelines.
+- **Companion skills.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
+  `docs/` pack this skill reads for conventions (for .NET repositories).
+  `/arkandia:ado-plan-build` is the same workflow bound to Azure Boards, Azure Repos,
+  and Azure Pipelines.

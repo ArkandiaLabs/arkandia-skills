@@ -159,7 +159,7 @@ addresses the review comments, then leaves the completion to a human.
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
-- **Companion skills.** `/arkandia:agent-context` writes the `AGENTS.md` / `docs/` pack
-  this skill reads for conventions, and `/arkandia:agent-context-dotnet` adds a .NET
-  deep-dive that Step B will pick up if it's there.
-  `/arkandia:linear-plan-build` is the same workflow bound to Linear and GitHub.
+- **Companion skills.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
+  `docs/` pack this skill reads for conventions (for .NET repositories); Step B picks
+  it up if it's there. `/arkandia:linear-plan-build` is the same workflow bound to
+  Linear and GitHub.

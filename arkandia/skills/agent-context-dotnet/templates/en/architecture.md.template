@@ -1,11 +1,11 @@
 <!--
 Placeholders:
   {{PROJECT_NAME}}
-  {{STACK_SUMMARY}}         — e.g. "Spring Boot 3 + PostgreSQL + Flyway, deployed on AWS ECS"
-  {{DETECTED_LANGUAGES}}    — list of primary languages inferred from Phase 1
-  {{DETECTED_FRAMEWORK}}    — primary framework (Spring Boot, Laravel, Django, Rails...)
-  {{DETECTED_PERSISTENCE}}  — DB + migration tool (PostgreSQL + Flyway, MySQL + Liquibase...)
-  {{DETECTED_DEPLOYMENT}}   — container, serverless, bare VM, etc.
+  {{STACK_SUMMARY}}         — e.g. "ASP.NET Core 10 + SQL Server + EF Core 10, deployed to Azure Container Apps"
+  {{DETECTED_LANGUAGES}}    — primary languages inferred from Phase 1 (C#, F#, plus any frontend language)
+  {{DETECTED_FRAMEWORK}}    — primary framework (ASP.NET Core, Blazor, MAUI, Worker Service...)
+  {{DETECTED_PERSISTENCE}}  — DB + provider + migration tool (SQL Server + EF Core, PostgreSQL + Npgsql + EF Core...)
+  {{DETECTED_DEPLOYMENT}}   — Azure App Service, Container Apps / AKS, IIS on VM, container image, etc.
 -->
 
 # Architecture
