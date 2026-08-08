@@ -3,7 +3,7 @@ Placeholders:
   {{PROJECT_NAME}}
 -->
 
-# Usuario Objetivo
+# Usuario Objetivo — {{PROJECT_NAME}}
 
 <!-- TODO: 2-3 personas, cada una con: quién es, qué intenta lograr, qué le frustra. Luego una tabla de implicaciones: cada rasgo → qué significa para cómo se construye el producto / código. -->
 

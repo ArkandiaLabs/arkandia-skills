@@ -53,10 +53,9 @@ you resolved it from (`example-brief-...md`, inline).
 ## Phase 1 — Explore (make the codebase legible), fanned out
 
 1. **Establish the repo's conventions first.** If the repo has an `AGENTS.md`,
-   `CLAUDE.md`, or a `docs/` context pack (for example one produced by
-   `/arkandia:agent-context`), read it — that is the fastest path to this repo's
-   patterns, commands, and non-obvious rules. If none exists, infer the conventions
-   from the code as you explore, and treat that inference as provisional.
+   `CLAUDE.md`, or a `docs/` context pack, read it — that is the fastest path to this
+   repo's patterns, commands, and non-obvious rules. If none exists, infer the
+   conventions from the code as you explore, and treat that inference as provisional.
 2. **Fan out `Explore` subagents by the repo's own seams**, all in a single message so
    they run concurrently. Pick the partition that fits the codebase — modules,
    packages, layers, or services — and scope each agent to the area the feature

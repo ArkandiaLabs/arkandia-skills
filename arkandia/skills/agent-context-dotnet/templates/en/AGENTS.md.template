@@ -9,7 +9,9 @@ Placeholders:
   {{CODE_STYLE_NOTES}}     — one paragraph on linters/formatters in use
 -->
 
-# AGENTS.md
+# AGENTS.md — {{PROJECT_NAME}}
+
+{{ONE_LINE_PURPOSE}}
 
 Guidance for AI coding agents working in this repo. Follows the [agents.md](https://agents.md) convention.
 

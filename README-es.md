@@ -4,7 +4,7 @@
 
 Una colección de skills para agentes de código de IA, desde Arkandia, en dos familias.
 
-**Contexto** — **`agent-context`** genera un paquete de documentación mínimo y bien estructurado (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) para cualquier repositorio, y **`agent-context-dotnet`** agrega encima un análisis profundo especializado en .NET. Ambos terminan validando contigo las afirmaciones más importantes que generaron, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto.
+**Contexto** — **`agent-context-dotnet`** genera un paquete de documentación mínimo y bien estructurado para un repositorio .NET (`AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura) más un análisis profundo en `docs/dotnet.md`, y termina validando contigo las afirmaciones más importantes que generó, para reducir alucinaciones. El paquete generado sigue la convención [`agents.md`](https://agents.md) y está dimensionado para que un agente de IA pueda mantenerlo en contexto.
 
 **Entrega** — **`plan-and-build`** lleva un brief de feature pequeña desde *léelo* hasta *implementado, gates en verde, listo para commit* a través de una cadena explícita y enseñable (explorar → planear → revisión adversarial → tu aprobación → construir con tests primero → gates → commit), una fase a la vez, y **`plan-and-build-dotnet`** conecta esa misma cadena con work items de Azure Boards y gates de .NET/Make.
 
@@ -52,14 +52,7 @@ npx skills add ArkandiaLabs/arkandia-skills -y
 
 ## Uso
 
-Dentro de cualquier repositorio:
-
-```
-/arkandia:agent-context          # Salida en inglés (default)
-/arkandia:agent-context es       # Salida en español
-```
-
-Para repositorios .NET, continúa con el especialista (córrelo después de `agent-context`, o por su cuenta):
+Dentro de cualquier repositorio .NET:
 
 ```
 /arkandia:agent-context-dotnet      # Salida en inglés (default)
@@ -68,12 +61,12 @@ Para repositorios .NET, continúa con el especialista (córrelo después de `age
 
 Para llevar una feature desde un brief hasta un commit, mira [Plan → Build](#plan--build) más abajo.
 
-El skill `agent-context` va a:
+El skill va a:
 
-1. **Descubrir** — escanea el repo buscando lenguaje, framework, persistencia, CI, IaC y docs existentes. Soporta Java (Maven/Gradle/Spring), PHP (Laravel/Symfony/WordPress), Python, Node, Go, Ruby, Rust, .NET, y señales de infra empresarial (Liquibase, Flyway, Jenkins, Azure DevOps, Kubernetes, Terraform). Cuando detecta .NET te remite a `agent-context-dotnet` para un análisis más profundo.
-2. **Entrevistar** — pregunta solo lo que no se puede inferir: contexto de negocio, reglas no obvias, docs opcionales.
-3. **Redactar** — llena plantillas con tus respuestas y los hallazgos del repo.
-4. **Conectar** — genera `AGENTS.md` (≤80 líneas, estilo tabla de contenidos) y `CLAUDE.md` delegador.
+1. **Descubrir** — lee la solución y cada proyecto: el grafo de referencias y las capas, los target frameworks, la gestión de paquetes (incluyendo `Directory.Packages.props`), la orquestación con Aspire, el acceso a datos con EF Core, la raíz de composición de DI, configuración y secretos, el runner de pruebas que realmente se usa, las puertas de calidad, la superficie de UI/API, cómo se producen las imágenes y binarios, y los docs existentes. Actualizado a .NET 10 / C# 14 — incluyendo los artefactos que un escaneo basado solo en `Dockerfile` o solo en `*.csproj` se pierde, como la publicación de contenedores con el SDK y las apps basadas en archivo.
+2. **Entrevistar** — alrededor de diez preguntas, y nunca una que ya pueda responder leyendo el repo: contexto de negocio, reglas no obvias, target de despliegue, ruta a producción, fuente de secretos, modelo de autenticación.
+3. **Redactar** — llena plantillas con tus respuestas y los hallazgos del repo; borra las secciones que no aplican en vez de rellenarlas de TODOs.
+4. **Conectar** — genera `AGENTS.md` (≤80 líneas, estilo tabla de contenidos) y un `CLAUDE.md` delegador.
 5. **Validar afirmaciones** — expone los hechos clave que escribió (framework + versión, persistencia, comandos, entidades principales), cada uno con su fuente y nivel de confianza, y luego confirma o corrige contigo los inciertos. Inspirado en [Claimify](https://arxiv.org/abs/2502.10855) de Microsoft Research. Escribe un registro de auditoría en `docs/claims-ledger.md`.
 6. **Verificar** — reporta el árbol de archivos escritos, valida los enlaces.
 
@@ -91,7 +84,7 @@ Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone ad
     ├── data-model.md
     ├── infrastructure.md
     ├── claims-ledger.md   # qué se verificó vs qué queda pendiente
-    ├── dotnet.md          # agregado por agent-context-dotnet (repos .NET)
+    ├── dotnet.md          # contexto .NET profundo: grafo de proyectos, TFMs, EF Core, DI
     ├── target-user.md     # opcional
     ├── design.md          # opcional
     └── adrs/
@@ -100,13 +93,11 @@ Si ya existen docs de contexto, el skill entra en **modo aumentar** y propone ad
         └── adr-0001-<slug>.md
 ```
 
-Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. Los skills no van a inventar versiones de framework, detalles de esquema, ni contexto de negocio que no puedan verificar — y el paso de validación de afirmaciones te pide confirmar los hechos clave antes de que confíes en ellos.
-
-`agent-context-dotnet` funciona mejor junto a `agent-context` (instalar el plugin/repo trae ambos), pero también funciona **por su cuenta**: si no existe un paquete base, produce `docs/dotnet.md` más un `AGENTS.md` mínimo para que el análisis profundo siga siendo accesible.
+Cada doc tiene marcadores `<!-- TODO -->` donde aún se requiere input humano. El skill no va a inventar versiones de framework, detalles de esquema, ni contexto de negocio que no pueda verificar — y el paso de validación de afirmaciones te pide confirmar los hechos clave antes de que confíes en ellos.
 
 ## Plan → Build
 
-Donde `agent-context` *escribe* el contexto de tu repo, `plan-and-build` lo *consume* para entregar un cambio. Dale un brief corto de la feature — un archivo Markdown o una descripción en línea — y maneja el trabajo **una fase a la vez**, deteniéndose después de cada una para que mantengas el control:
+Donde `agent-context-dotnet` *escribe* el contexto de tu repo, `plan-and-build` lo *consume* para entregar un cambio. Dale un brief corto de la feature — un archivo Markdown o una descripción en línea — y maneja el trabajo **una fase a la vez**, deteniéndose después de cada una para que mantengas el control:
 
 ```
 /arkandia:plan-and-build "agrega un flag --dry-run al comando de exportación"

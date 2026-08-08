@@ -1,7 +1,7 @@
 {
   "name": "arkandia",
-  "version": "0.2.0",
-  "description": "Arkandia's toolkit of AI coding-agent skills. `agent-context` bootstraps a minimal documentation pack (AGENTS.md, architecture, ADRs, data model, infrastructure) for any repository, and `agent-context-dotnet` adds a specialized .NET deep-dive (solution/project graph, target frameworks, EF Core, DI, analyzers, CI) — both validate the most important generated claims with you to reduce hallucinations. `plan-and-build` drives a small feature brief from read → explore → plan → adversarial review → your approval → test-first build → gates → commit, one phase at a time, and `plan-and-build-dotnet` adds Azure Boards work items and .NET/Make gates.",
+  "version": "0.3.0",
+  "description": "Arkandia's toolkit of AI coding-agent skills. `agent-context-dotnet` bootstraps a documentation pack for a .NET repository — AGENTS.md, architecture, ADRs, data model, infrastructure, plus a `docs/dotnet.md` deep-dive covering the solution/project graph, target frameworks, central package management, Aspire, EF Core, DI, analyzers, packaging and CI — and validates the most important generated claims with you to reduce hallucinations. `plan-and-build` drives a small feature brief from read → explore → plan → adversarial review → your approval → test-first build → gates → commit, one phase at a time, and `plan-and-build-dotnet` adds Azure Boards work items and .NET/Make gates.",
   "author": {
     "name": "Manuel Zapata",
     "email": "apps@arkandia.co"
