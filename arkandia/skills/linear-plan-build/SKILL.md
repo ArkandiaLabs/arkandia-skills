@@ -139,6 +139,3 @@ the review-comment half of Step I; an absent CI is not a green CI.
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
-- **Companion skill.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
-  `docs/` pack this skill reads for conventions (for .NET repositories); Step B picks
-  it up if it's there.
