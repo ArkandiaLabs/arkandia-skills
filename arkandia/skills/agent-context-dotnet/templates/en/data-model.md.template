@@ -1,8 +1,8 @@
 <!--
 Placeholders:
   {{PROJECT_NAME}}
-  {{MIGRATION_TOOL}}         — Flyway, Liquibase, Alembic, Prisma, etc.
-  {{MIGRATIONS_PATH}}        — e.g. "db/migration/", "alembic/versions/", "prisma/migrations/"
+  {{MIGRATION_TOOL}}         — normally "EF Core migrations"; note the version if you read it
+  {{MIGRATIONS_PATH}}        — e.g. "src/Infrastructure/Migrations/"
 -->
 
 # Data Model

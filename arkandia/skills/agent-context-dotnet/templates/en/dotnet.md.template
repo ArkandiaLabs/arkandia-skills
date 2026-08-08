@@ -2,13 +2,18 @@
 Placeholders:
   {{PROJECT_NAME}}
   {{SOLUTION_FILES}}        — .sln / .slnx file name(s)
-  {{TARGET_FRAMEWORKS}}     — e.g. "net8.0 (api, core), net8.0-android/-ios (mobile)"
-  {{LANG_POSTURE}}          — e.g. "C# 12, nullable enabled, implicit usings"
-  {{EF_PROVIDER}}           — e.g. "SQL Server (EF Core 8)" or "none"
+  {{TARGET_FRAMEWORKS}}     — e.g. "net10.0 (api, core), net10.0-android/-ios (mobile)"
+  {{TFM_SUPPORT_STATUS}}    — e.g. "net10.0 — LTS, supported to Nov 2028" or "net8.0 — end of support Nov 10, 2026 ⚠"
+  {{LANG_POSTURE}}          — e.g. "C# 14, nullable enabled, implicit usings"
+  {{PACKAGE_MANAGEMENT}}    — e.g. "central (Directory.Packages.props)" or "per-project"
+  {{EF_PROVIDER}}           — e.g. "SQL Server (EF Core 10)" or "none"
   {{DI_CONTAINER}}          — e.g. "built-in (Program.cs)" or "Autofac"
   {{SECRETS_STRATEGY}}      — e.g. "user-secrets (dev) + Azure Key Vault (prod)"
+  {{TEST_RUNNER}}           — e.g. "Microsoft.Testing.Platform (global.json)" or "VSTest (default)"
+  {{PACKAGING_SHAPE}}       — e.g. "Dockerfile" / "SDK container publishing" / "framework-dependent publish"
 Keep this file to .NET-shaped facts the generic docs can't hold. Do NOT restate architecture.md.
-Leave <!-- TODO --> where you couldn't read the answer. Delete sections that don't apply.
+Leave <!-- TODO --> where you couldn't read the answer. DELETE sections that don't apply —
+a deleted section beats a section full of TODOs.
 -->
 
 # .NET Solution Guide — {{PROJECT_NAME}}
@@ -22,7 +27,7 @@ Deep .NET context for AI coding agents. For the general picture see [architectur
 
 | Project | Type | TFM | Purpose |
 |---|---|---|---|
-| <!-- Acme.Api --> | <!-- Web API --> | <!-- net8.0 --> | <!-- one line --> |
+| <!-- Acme.Api --> | <!-- Web API --> | <!-- net10.0 --> | <!-- one line --> |
 | | | | |
 
 **Project references** (layering):
@@ -38,12 +43,19 @@ flowchart LR
 ## 2. Target frameworks & language
 
 - **Target framework(s):** {{TARGET_FRAMEWORKS}}
+- **Support status:** {{TFM_SUPPORT_STATUS}}
 - **Language posture:** {{LANG_POSTURE}}
 - **Pinned SDK / shared build props:** <!-- TODO: global.json, Directory.Build.props if any -->
 
-## 3. Key NuGet dependencies
+<!-- If any project is on an out-of-support framework, say so here in one line and repeat it in §11. -->
 
-<!-- TODO: highlight the load-bearing packages only (not the full list). -->
+## 3. Package management & dependencies
+
+- **Version management:** {{PACKAGE_MANAGEMENT}}
+  <!-- If central: PackageReference in a .csproj must NOT carry a Version attribute — versions live
+       in Directory.Packages.props as <PackageVersion>. Keep this line; agents get it wrong. -->
+- **Feeds:** <!-- TODO: nuget.config sources, incl. private feeds. Delete if only nuget.org. -->
+- **Local tools:** <!-- TODO: .config/dotnet-tools.json — if present, commands are `dotnet tool restore` then `dotnet <tool>`. Delete if absent. -->
 
 | Package | Version | Role |
 |---|---|---|
@@ -52,26 +64,36 @@ flowchart LR
 
 - **Dependency health:** <!-- TODO: note version freshness / known-vuln risk only if you have a concrete signal. -->
 
-## 4. Composition root / DI
+## 4. Aspire orchestration
+
+<!-- DELETE this whole section if there is no AppHost project. -->
+
+- **AppHost:** <!-- TODO: project + file; what resources it composes (projects, DB, cache, queue) -->
+- **ServiceDefaults:** <!-- TODO: what AddServiceDefaults() wires up — OTel, health checks, service discovery, HttpClient resilience -->
+- **Run the system with:** <!-- `aspire run` or `dotnet run --project <…>.AppHost` — NOT each service individually -->
+- **Convention:** ServiceDefaults holds shared cross-cutting wiring only — do not put models or business logic there.
+
+## 5. Composition root / DI
 
 - **Container:** {{DI_CONTAINER}}
 - **Registration lives in:** <!-- TODO: Program.cs / Startup.cs / *Extensions / Autofac modules -->
 - **Conventions / notable lifetimes:** <!-- TODO: scoped DbContext, hosted services, options pattern, assembly scanning... -->
 
-## 5. Data access (EF Core)
+## 6. Data access (EF Core)
 
 - **Provider:** {{EF_PROVIDER}}
 - **DbContext:** <!-- TODO: class + path. Flag if very large. -->
 - **Model configuration:** <!-- TODO: data annotations / Fluent API / IEntityTypeConfiguration -->
+- **Query filters:** <!-- TODO: global or named query filters (tenant scoping, soft delete) and whether any can be disabled by name. Delete if none. -->
 - **Migrations:** <!-- TODO: path + how applied (dotnet ef / Migrate() on startup / CI). Cross-link data-model.md -->
 
-## 6. Configuration & secrets
+## 7. Configuration & secrets
 
 - **Config layering:** <!-- TODO: appsettings.json -> appsettings.{Env}.json -> user-secrets/env -> Key Vault -->
 - **Secrets strategy:** {{SECRETS_STRATEGY}}
 - **⚠ Committed secrets:** <!-- TODO: list any secret found committed (do NOT paste the value); recommend user-secrets / Key Vault + appsettings.example.json. Delete this line if none. -->
 
-## 7. Build, run, test
+## 8. Build, run, test
 
 ```bash
 # TODO: keep the 3-6 commands developers actually run
@@ -81,10 +103,12 @@ dotnet test
 dotnet ef migrations add <Name> --project <db project>
 ```
 
+- **Test runner:** {{TEST_RUNNER}}
 - **Test framework(s):** <!-- TODO: xUnit / NUnit / MSTest -->
+- **Supporting libraries:** <!-- TODO: mocking, assertions, integration (WebApplicationFactory / Testcontainers), coverage -->
 - **Test organization:** <!-- TODO: by layer / by domain / integration vs unit vs automation -->
 
-## 8. Quality gates
+## 9. Quality gates
 
 | Gate | Status | Notes |
 |---|---|---|
@@ -95,21 +119,54 @@ dotnet ef migrations add <Name> --project <db project>
 
 <!-- TODO: where absent, recommend adopting it to enforce the layering in §1. -->
 
-## 9. UI / platform
+## 10. UI & API surface
 
-<!-- TODO: keep only what applies; delete if headless. -->
+<!-- TODO: keep only what applies; DELETE if headless with no HTTP surface. -->
 
-- **UI stack:** <!-- Razor Pages / MVC / Blazor / MAUI -->
+- **API shape:** <!-- minimal APIs / controllers; grouping; validation approach -->
+- **OpenAPI:** <!-- built-in Microsoft.AspNetCore.OpenApi (3.1 by default in .NET 10; WithOpenApi() is deprecated) / Swashbuckle / NSwag / Scalar -->
+- **Identity:** <!-- ASP.NET Core Identity (passkeys?) / Entra ID / IdentityServer / JWT bearer -->
+- **UI stack:** <!-- Razor Pages / MVC / Blazor (render modes) / MAUI -->
 - **Platform-specific wiring (MAUI):** <!-- Platforms/Android & Platforms/iOS services, handlers, deep links -->
 
-## 10. Gotchas / hotspots
+## 11. Deployment & packaging
+
+- **Packaging shape:** {{PACKAGING_SHAPE}}
+  <!-- Note: the SDK can build container images with NO Dockerfile via `dotnet publish /t:PublishContainer`
+       and <ContainerRepository> / <ContainerImageFormat>. Don't infer "not containerized" from a missing Dockerfile. -->
+- **AOT / trimming / single file:** <!-- TODO: PublishAot, PublishTrimmed, TrimMode, PublishSingleFile, InvariantGlobalization. Delete if none. -->
+  <!-- If any are on, they are hard constraints: no unbounded reflection, no reflection-based JSON — use source-generated JsonSerializerContext. Repeat in §13. -->
+- **Output layout:** <!-- TODO: ArtifactsPath if set; otherwise default bin/obj. Delete if default. -->
+
+## 12. Cross-cutting concerns
+
+<!-- DELETE if the repo has none of these. -->
+
+- **Observability:** <!-- OpenTelemetry, health checks, Serilog/NLog -->
+- **Resilience:** <!-- Microsoft.Extensions.Http.Resilience / Polly pipelines -->
+- **AI integrations:** <!-- Microsoft.Extensions.AI, Semantic Kernel, ModelContextProtocol, .mcp.json -->
+
+<!-- If Aspire is present (§4), note that ServiceDefaults likely already supplies these — extend it, don't re-register per service. -->
+
+## 13. Gotchas / hotspots
 
 <!-- TODO: the non-obvious things that trip up an agent editing this solution. Examples:
+- Project X targets net8.0 — out of support Nov 10, 2026. Upgrade before adding surface area.
 - DbContext is ~9k LOC — split changes carefully.
 - Service methods are async but don't thread CancellationToken — follow the existing pattern.
+- PublishAot is on: no reflection-based serialization.
 - Project X must not reference project Y (see ADRs).
+- The codebase uses explicit backing fields, not the C# 14 `field` keyword — match it.
 -->
+
+## 14. File-based apps
+
+<!-- DELETE unless the repo has standalone .cs scripts (#:package / #:sdk / shebang). -->
+
+<!-- TODO: list them. They run with `dotnet run <file>.cs`, target native AOT by default in .NET 10,
+     and can be promoted with `dotnet project convert`. -->
 
 ## Related docs
 
 - [Architecture](./architecture.md) · [Data model](./data-model.md) · [Infrastructure](./infrastructure.md) · [Decisions](./adrs/)
+<!-- Add any pre-existing repo docs here rather than restating them. -->
