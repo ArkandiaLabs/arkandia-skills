@@ -8,7 +8,7 @@ description: >
   plan and puts it through a three-lens adversarial review; asks for your approval
   through plan mode when the change warrants it and skips it when it doesn't; then
   implements test-first, runs your repo's own gates, opens an Azure Repos PR, and
-  babysits it to green. Stack-agnostic. For Linear, use `/arkandia:linear-plan-build`.
+  babysits it to green. Stack-agnostic — assumes no particular architecture.
   Invoke with `/arkandia:ado-plan-build [work item id | URL] [skip-checkpoint]`.
 argument-hint: "[work item id (2, #2, or its URL)] [skip-checkpoint]"
 disable-model-invocation: true
@@ -22,9 +22,8 @@ comments addressed, and the work item updated**. There is exactly **one** explic
 checkpoint — plan approval — and even that is conditional: routine changes run
 straight through.
 
-This is the Azure DevOps twin of `/arkandia:linear-plan-build`: same phases, same
-autonomy, different bindings. It is **stack-agnostic** — .NET repositories are one
-case it handles, not what it assumes.
+It is **stack-agnostic** — .NET repositories are one case it handles, not what it
+assumes.
 
 **Read `references/build-loop.md` now.** It is the body of this skill, not optional
 background. This file supplies the Azure DevOps bindings it asks for.
@@ -159,7 +158,6 @@ addresses the review comments, then leaves the completion to a human.
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
-- **Companion skills.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
+- **Companion skill.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
   `docs/` pack this skill reads for conventions (for .NET repositories); Step B picks
-  it up if it's there. `/arkandia:linear-plan-build` is the same workflow bound to
-  Linear and GitHub.
+  it up if it's there.

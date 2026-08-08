@@ -114,7 +114,7 @@ The chain both skills run:
 5. **Adversarial review** — three subagents critique the plan through different lenses (conventions, correctness, scope) *before* any code is written. The scope lens specifically attacks the Assumptions list.
 6. **Your approval — only if the change warrants it.** Plan mode opens for anything over ~3 steps or ~3 files, or that touches a contract, a schema, auth, or money, or that rests on assumptions, or that is hard to reverse. Small, reversible, fully-specified changes print the plan and keep going.
 7. **Implement, test-first** — RED → GREEN per step, fanning out only where edits don't collide.
-8. **Gates** — resolve your repo's own gate commands (`.claude/gates.sh` → `AGENTS.md` → manifest detection), then `/code-review`, plus `/security-review` when the diff touches auth, secrets, or input parsing. Never proceed on red. Gates that your repo doesn't define are reported as skipped, not silently counted as green.
+8. **Gates** — resolve your repo's own gate commands (a Gates/Commands section in `CLAUDE.md`/`AGENTS.md` → manifest detection → ask), then `/code-review`, plus `/security-review` when the diff touches auth, secrets, or input parsing. Never proceed on red. Gates that your repo doesn't define are reported as skipped, not silently counted as green.
 9. **Commit, push, open the PR** — staging only what changed, with the tracker's link token in the message (`ABC-123`, `AB#42`).
 10. **Babysit the PR to green** — watch CI, rerun a flaky job once, fix real failures at the source, then address review comments in a loop until the PR is green and clean. It stops after three failed attempts on the same job.
 11. **Wrap up** — post the summary to the tracker and move the ticket to its review state.

@@ -7,7 +7,8 @@ description: >
   explores the repo; drafts a plan and puts it through a three-lens adversarial
   review; asks for your approval through plan mode when the change warrants it and
   skips it when it doesn't; then implements test-first, runs your repo's gates, opens
-  the PR, and babysits it to green. For Azure DevOps, use `/arkandia:ado-plan-build`.
+  the PR, and babysits it to green. Stack-agnostic — assumes no particular
+  architecture.
   Invoke with `/arkandia:linear-plan-build [ABC-123 | issue URL] [skip-checkpoint]`.
 argument-hint: "[ABC-123 | Linear issue URL] [skip-checkpoint]"
 disable-model-invocation: true
@@ -138,7 +139,6 @@ the review-comment half of Step I; an absent CI is not a green CI.
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
-- **Companion skills.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
-  `docs/` pack this skill reads for conventions (for .NET repositories).
-  `/arkandia:ado-plan-build` is the same workflow bound to Azure Boards, Azure Repos,
-  and Azure Pipelines.
+- **Companion skill.** `/arkandia:agent-context-dotnet` writes the `AGENTS.md` /
+  `docs/` pack this skill reads for conventions (for .NET repositories); Step B picks
+  it up if it's there.

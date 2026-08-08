@@ -2,7 +2,7 @@
 
 This is the body of the delivery skills. The calling `SKILL.md` reads the ticket and
 supplies the **bindings**; everything below is tracker-agnostic and runs the same way
-whether the ticket came from Linear or Azure Boards.
+whatever tracker the ticket came from.
 
 > This procedure is intentionally duplicated in every delivery skill (skills ship
 > independently). If you change it here, mirror the change in the other skill's copy.
@@ -212,11 +212,16 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
 
 **Resolve the repo's gate commands in this order**, and use the first that answers:
 
-1. `.claude/gates.sh` at the repo root;
-2. a "Gates" or "Commands" section in `AGENTS.md` / `CLAUDE.md`;
-3. fallback detection from the manifest — `Makefile`, `package.json`,
+1. A "Gates", "Commands", or "Build & Test" section in `CLAUDE.md` / `AGENTS.md` —
+   where a repository is supposed to declare this. Claude Code reads `CLAUDE.md`; many
+   repos put the detail in `AGENTS.md` and delegate to it from there, so check both.
+2. Fallback detection from the manifest — `Makefile`, `package.json`,
    `pyproject.toml`, `go.mod`, `Cargo.toml`, `*.sln`, `pom.xml`, `build.gradle`,
-   `composer.json`, `Gemfile`.
+   `composer.json`, `Gemfile`. Read the actual scripts/targets; don't guess that
+   `npm test` exists because `package.json` does.
+3. If neither answers and the repo clearly has checks you can't identify, **ask** —
+   one `AskUserQuestion` naming the candidates you found beats inventing a command or
+   declaring an untested repo green.
 
 Run every gate that resolves: lint, type-check, build, tests, and any architecture or
 dependency lint the repo defines. **A gate that does not exist degrades to green — but
