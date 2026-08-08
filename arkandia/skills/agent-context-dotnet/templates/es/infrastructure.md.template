@@ -5,7 +5,7 @@ Placeholders:
   {{DETECTED_CI}}            — ej. "GitHub Actions", "Jenkins", "Azure Pipelines"
 -->
 
-# Infraestructura
+# Infraestructura — {{PROJECT_NAME}}
 
 ## Desarrollo local
 

@@ -5,7 +5,7 @@ Placeholders:
   {{MIGRATIONS_PATH}}        — e.g. "src/Infrastructure/Migrations/"
 -->
 
-# Data Model
+# Data Model — {{PROJECT_NAME}}
 
 ## Overview
 
