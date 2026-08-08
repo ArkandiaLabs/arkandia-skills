@@ -129,6 +129,7 @@ Unlike the context skills, these write code, not docs — so they have no claim-
 
 | Before | Now |
 |---|---|
+| `agent-context` + `agent-context-dotnet` (base pack, then a .NET deep-dive) | `agent-context-dotnet` alone — the two were merged into one run |
 | `plan-and-build` (Markdown brief, stopped at commit) | `linear-plan-build` (Linear issue → green PR) |
 | `plan-and-build-dotnet` (.NET + Clean Architecture + Azure Boards) | `ado-plan-build` (Azure Boards → green PR, stack- and architecture-agnostic) |
 

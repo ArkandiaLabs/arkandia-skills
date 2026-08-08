@@ -129,6 +129,7 @@ A diferencia de los skills de contexto, estos escriben código, no docs — así
 
 | Antes | Ahora |
 |---|---|
+| `agent-context` + `agent-context-dotnet` (paquete base y luego el análisis .NET) | solo `agent-context-dotnet` — los dos se fusionaron en una sola corrida |
 | `plan-and-build` (brief en Markdown, paraba en el commit) | `linear-plan-build` (issue de Linear → PR en verde) |
 | `plan-and-build-dotnet` (.NET + Clean Architecture + Azure Boards) | `ado-plan-build` (Azure Boards → PR en verde, agnóstico del stack y de la arquitectura) |
 
