@@ -8,8 +8,9 @@ un mismo arco: darle al repositorio el **contexto** que el agente necesita para 
 
 La capa de instrumentación se parte en dos, como en el Método Arkandia. `instrument-project-dotnet`
 cubre la mitad **determinística** — lo que la máquina verifica sola, sin ambigüedad: el build, el
-estilo, los secretos, las pruebas de arquitectura, el CI. La mitad no determinística — las reglas,
-hooks y revisiones que solo un modelo puede juzgar — es un skill aparte, todavía por venir.
+estilo, los secretos, las pruebas de arquitectura, el CI. `instrument-agent-dotnet` cubre la mitad
+**no determinística** — las herramientas a las que el agente puede llegar y los límites dentro de
+los que trabaja, como servidores MCP y hooks.
 
 Funciona con Claude Code, OpenCode, Codex, Cursor y los demás agentes soportados por
 [`skills.sh`](https://skills.sh).
@@ -38,6 +39,7 @@ marco del *Método Arkandia* del taller de *Desarrollo Guiado por IA*.
 |---|---|---|
 | `agent-context-dotnet` | **Contexto** — genera `AGENTS.md`, arquitectura, ADRs, modelo de datos, infraestructura y un análisis profundo en `docs/dotnet.md` para un repo .NET, y valida contigo las afirmaciones que sostienen el resto | [→](./docs/skills/agent-context-dotnet-es.md) |
 | `instrument-project-dotnet` | **Instrumentación determinística** — instala los ocho controles contra los que el agente choca solo, en el build, los hooks y el pipeline, y comprueba que cada uno falla antes de reportar éxito | [→](./docs/skills/instrument-project-dotnet-es.md) |
+| `instrument-agent-dotnet` | **Instrumentación no determinística** — registra los servidores MCP del equipo y luego instala un catálogo de hooks de Claude Code (guard de lectura de secretos, formato acotado, bloqueador de comandos peligrosos, barrido de avisos, log de auditoría y guards de Central Package Management y archivos generados), disparando cada uno antes de reportar éxito | [→](./docs/skills/instrument-agent-dotnet-es.md) |
 | `linear-plan-build` · `ado-plan-build` | **Entrega** — de un ticket a un PR en verde: interrogar → explorar → planear → revisión adversarial → construir con tests primero → tus gates → PR → cuidar el CI. Linear + GitHub, o Azure Boards + Azure Repos + Pipelines | [→](./docs/skills/plan-build-es.md) |
 
 ## Instalación
@@ -81,7 +83,8 @@ Dentro de cualquier repositorio .NET:
 /arkandia:agent-context-dotnet                      # salida en inglés (por defecto)
 /arkandia:agent-context-dotnet es                   # salida en español
 
-/arkandia:instrument-project-dotnet      # instalar los ocho controles
+/arkandia:instrument-project-dotnet      # determinística: los ocho controles
+/arkandia:instrument-agent-dotnet        # no determinística: servidores MCP + hooks
 
 /arkandia:linear-plan-build ABC-123                 # un issue de Linear → PR en verde
 /arkandia:linear-plan-build ABC-123 skip-checkpoint # issue rutinario: sin parada de aprobación

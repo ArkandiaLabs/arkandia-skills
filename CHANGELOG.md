@@ -15,7 +15,25 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   Azure DevOps) that runs the same command as your laptop. Every gate is proven to fail before the
   run reports success, and the documentation the install invalidates is updated.
 
+- **`instrument-agent-dotnet`** — the other half of the instrumentation layer. Registers the
+  team's MCP servers in `.mcp.json`, derived from what the repository actually uses, then installs
+  a catalogue of seven Claude Code hooks in `.claude/settings.json`, backed by portable bash
+  scripts in `scripts/agent-hooks/`: a secret read-guard, `dotnet format` scoped to the file that
+  changed, a dangerous-command blocker, a `SessionStart` advisory sweep, an audit log, and guards
+  for central package management and generated files. Two hooks are installed by default and the
+  rest are offered — the two that protect an artifact are hidden when the repository does not have
+  it. Every installed hook is fired on purpose before the run reports success, and the report
+  states the two asymmetries the layer carries: the MCP servers are written but pending workspace
+  approval, and the hooks run under Claude Code alone.
+
 ### Changed
+
+- **`instrument-project-dotnet` now pins gitleaks in CI and verifies the download.** Both pipeline
+  templates resolved `releases/latest` on every run and extracted the archive with `sudo` into
+  `/usr/local/bin`, so the gate meant to catch problems ran an unverified binary that could change
+  between runs with nothing recording it. The version is now resolved once, when the file is
+  written, and pinned; the archive is checked against the project's published `checksums.txt`
+  before extraction; and the install no longer escalates privileges.
 
 - **README restructured.** It is now a catalogue: each skill's detail moved to
   `docs/skills/<name>.md`, with a Spanish counterpart at `docs/skills/<name>-es.md`. A new skill is

@@ -29,6 +29,9 @@
     "instrumentation",
     "secret-scanning",
     "central-package-management",
-    "lock-files"
+    "lock-files",
+    "mcp",
+    "hooks",
+    "agent-guardrails"
   ]
 }
