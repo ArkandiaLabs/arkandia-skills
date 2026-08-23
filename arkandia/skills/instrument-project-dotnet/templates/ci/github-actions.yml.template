@@ -63,22 +63,35 @@ jobs:
       # Puts the binary on PATH so `make ci` can run the single scan the Makefile defines.
       # Deliberately NOT gitleaks/gitleaks-action: that action runs its own scan instead of
       # exposing the binary, and it requires a licence key for organisation-owned repos.
-      # No version is pinned here for the same reason no package version is pinned anywhere
-      # else in this skill. Drop this step if secret scanning was skipped.
+      # Drop this step if secret scanning was skipped.
+      #
+      # {{GITLEAKS_VERSION}} is RESOLVED AT INSTALL TIME, not written by hand:
+      #   gh release view --repo gitleaks/gitleaks --json tagName --jq '.tagName' | tr -d v
+      # This is what "never hardcode a version" means here — resolve it from the source of truth
+      # when the file is written, then pin it. It does NOT mean re-resolving on every CI run: a
+      # pipeline that fetches "latest" runs a different binary tomorrow than it ran today, with
+      # nothing recording the change, and a compromised or simply broken release lands straight in
+      # the gate that is supposed to catch problems. Bump it the way you bump any dependency.
       - name: Install gitleaks
         env:
-          # The API is rate-limited to 60 requests per hour per IP when unauthenticated, which
-          # shared runners exhaust. The workflow token lifts that to 1000/hour and needs no
-          # permissions beyond the default read.
-          GH_TOKEN: ${{ github.token }}
+          GITLEAKS_VERSION: "{{GITLEAKS_VERSION}}"
         run: |
           set -euo pipefail
-          # `gh release download` resolves "latest" and retries; no JSON parsing, no broken pipe.
-          # `grep -m1` in a pipefail shell exits the producer with SIGPIPE and fails the step.
-          gh release download --repo gitleaks/gitleaks --pattern '*linux_x64.tar.gz' \
-            --output /tmp/gitleaks.tar.gz --clobber
-          sudo tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
-          gitleaks version
+          BASE="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          ARCHIVE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          cd "$(mktemp -d)"
+          curl -fsSL -o "$ARCHIVE" "$BASE/$ARCHIVE"
+          curl -fsSL -o checksums.txt "$BASE/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          # Verify before extracting. Without this the pin only says which URL was fetched, not
+          # what came back from it. The published checksums file lists every asset, so select the
+          # one line for this archive and let sha256sum do the comparison.
+          grep " ${ARCHIVE}\$" checksums.txt | sha256sum -c -
+          # No sudo: a writable directory on PATH is enough, and a CI step that escalates to
+          # install a linter is a habit worth not forming.
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf "$ARCHIVE" -C "$HOME/.local/bin" gitleaks
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/gitleaks" version
 
       - name: Install .NET SDK from global.json
         uses: actions/setup-dotnet@{{SETUP_DOTNET_MAJOR}}

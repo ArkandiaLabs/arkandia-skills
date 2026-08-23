@@ -256,10 +256,19 @@ See `references/arch-tests.md`.
 | New packages | `dotnet add package <name>` **without `--version`**, then read back the resolved version and report it |
 | Arch-test framework | Whatever the repo's other test projects use |
 | GitHub Actions majors | `gh api repos/<owner>/<action>/releases/latest --jq .tag_name`, truncated to the major. Never the value written in the template |
+| `{{GITLEAKS_VERSION}}` (CI) | `gh release view --repo gitleaks/gitleaks --json tagName --jq '.tagName' \| tr -d v`. Written into the pipeline as a **pinned** version with a checksum check, not re-resolved on every run — see below |
 | `.editorconfig` indentation | The modal indent of the existing `.cs` files. See `references/inspection.md` §4b — never the language default |
 
 Under central package management, `<PackageReference>` must carry no `Version`; add a
 `<PackageVersion>` to `Directory.Packages.props` instead.
+
+**"Resolve, never hardcode" means resolve when you write the file — not on every CI run.** The two
+are opposites for a downloaded binary. A pipeline that fetches `releases/latest` runs a different
+gitleaks tomorrow than it ran today, with nothing recording the change, and a broken or tampered
+release lands inside the gate meant to catch problems. So the CI templates resolve the current
+gitleaks version here, **pin it**, and verify the download against the project's published
+`checksums.txt` before extracting. The team bumps it like any other dependency. Say in the report
+which version you pinned, so they know what to bump.
 
 ### Where the target framework lives
 
