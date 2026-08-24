@@ -280,10 +280,12 @@ with `< /dev/null` so it exits instead of waiting for a handshake:
 
 ```bash
 # The assignment goes on its own line: `VAR=x cmd --flag "$VAR"` expands "$VAR" before the
-# assignment takes effect, so --dsn would receive an empty value.
+# assignment takes effect, so --dsn would receive an empty value. And capture before truncating:
+# piping into `head` hands you head's exit status, so a server that died reports 0.
 APP_DSN="<the real value>"
-npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
-  < /dev/null 2>&1 | head -5
+OUT="$(npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
+  < /dev/null 2>&1)"; RC=$?
+printf '%s\n' "$OUT" | head -5; echo "exit: $RC"
 ```
 
 A connected server says so. An unsupported flag or a malformed DSN fails here, in thirty seconds,

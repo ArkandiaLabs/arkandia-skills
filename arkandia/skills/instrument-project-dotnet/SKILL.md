@@ -78,7 +78,10 @@ Work through `references/inspection.md`. It covers, in order:
    MSTest, TUnit) and runner (VSTest vs Microsoft.Testing.Platform). This decides how the
    arch-test project is built.
 5. **Package management** — whether `Directory.Packages.props` exists (central package management
-   changes how you add references), and whether lock files are in use.
+   changes how you add references), and whether lock files are in use. **Count the lock files
+   against the project count**, not merely "are any present": a solution where some projects have
+   one and some do not restores half-pinned under `--locked-mode` and still goes green. Phase 3
+   question 4 needs that number, not a boolean.
 6. **Existing controls** — which of the eight are already present, and what each one contains.
 7. **CI** — `.github/workflows/`, `.azdevops/`, `azure-pipelines.yml`, `Jenkinsfile`,
    `.gitlab-ci.yml`.
@@ -148,16 +151,29 @@ consequence and the cost in files touched, then let them choose.
    in the solution** — state the exact count ("this edits 10 project files") and report the version
    drift you already measured. Offer `Migrate now`, `Skip — keep versions in each project`.
    Recommend migrating: the drift is usually already there and the change is mechanical.
-4. **Lock files** — only if `packages.lock.json` is absent. Right now a restore picks whatever
-   version the feed offers today, so a machine that restores next month can get a different
-   dependency tree from the same commit; a lock file records the tree that was actually resolved
-   and CI then restores in `--locked-mode`, which fails when the lock and the projects disagree.
-   The cost is real and ongoing: **one `packages.lock.json` per project, all of them committed**,
-   and every deliberate version change now needs a `dotnet restore` in the same commit or the
-   build goes red. Offer `Generate lock files`, `Skip — restore resolves fresh each time`.
-   Recommend it only when the team already commits `Directory.Packages.props` or accepted
-   question 3; on a repo where versions still live in ten `.csproj` files, the churn lands on
-   people who have not opted into central versions yet.
+4. **Lock files** — **count them per project first**, because the answer is rarely all-or-nothing:
+   `find . -name packages.lock.json -not -path '*/obj/*' | wc -l` against the project count.
+   - **Every project has one** — the control is present. Skip the question.
+   - **None do** — ask.
+   - **Some do.** This is the `partial` case, and it is the one that matters: `--locked-mode`
+     restores the projects that have a lock and resolves the rest fresh, so CI passes while half
+     the solution is unpinned and nobody can tell from a green build. Do not ask a generic
+     yes/no here. Show which projects have one and which do not, and offer `Complete the set
+     (generates N lock files)` or `Remove the ones that exist — a half-pinned solution reads as
+     pinned`. Leaving it as it is, is the one answer to argue against.
+
+   Then the question itself. Right now a restore picks whatever version the feed offers today, so
+   a machine that restores next month can get a different dependency tree from the same commit; a
+   lock file records the tree that was actually resolved, and CI restores in `--locked-mode`,
+   which fails when the lock and the projects disagree. The cost is real and ongoing: **one
+   `packages.lock.json` per project, all of them committed**, and every deliberate version change
+   now needs a `dotnet restore` in the same commit or the build goes red. Offer
+   `Generate lock files`, `Skip — restore resolves fresh each time`.
+
+   **This does not depend on question 3.** Lock files work with versions in ten `.csproj` files
+   exactly as they do under central package management — only the file you edit to change a
+   version differs. Recommending it alongside CPM is fine; *requiring* CPM first is not, and a
+   repo that declined the migration is precisely the one where a resolved tree drifts unnoticed.
 
 5. **CI platform** — only if Phase 1 found none or found both. `GitHub Actions`, `Azure DevOps`,
    `Skip CI for now`.
@@ -428,7 +444,7 @@ a pre-existing, committed source file you edited to trigger a break (controls 2,
 | # | Control | Violation | Expected |
 |---|---|---|---|
 | 1 | SDK pin | Set `version` one feature band above what is installed (10.0.400 → `10.0.500`) | `dotnet build` fails, naming the requested version, the `global.json` that asked for it, and the installed SDKs |
-| 1b | Lock files *(only if accepted in Phase 3)* | Bump a version in `Directory.Packages.props` without restoring | `dotnet restore --locked-mode` fails |
+| 1b | Lock files *(only if accepted in Phase 3)* | Bump a version **wherever this repo declares it** — `Directory.Packages.props` under central package management, the `.csproj` otherwise — without restoring | `dotnet restore --locked-mode` fails, naming the project whose lock no longer matches |
 | 2 | Strict build | Add an unused local variable | `dotnet build` fails |
 | 3 | Style | Reorder the `using` directives in a file | `make lint` fails, naming the file |
 | 4 | Entry point | No break needed | `make help` lists every target; `make check` chains them |

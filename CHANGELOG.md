@@ -47,6 +47,12 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   The matcher is now `Bash`. Hook 1 keeps `PowerShell`, because it matches a path rather than
   syntax.
 
+- **The hook regression suite no longer writes outside its own fixture.** Two `audit-log` cases
+  ran the hook from the runner's directory instead of `$LOGREPO`, and the hook resolves its log
+  path from `repo_root` — so every run appended audit rows to the checkout itself. `.gitignore`
+  carries `*.log`, so the stray file never appeared in `git status`. All four fixture payloads now
+  also assert exit status and silence, which the previous helper discarded. 150 cases → 161.
+
 - **Lock files are their own Phase 3 question in `instrument-project-dotnet`.** They were generated
   as part of the reproducible-inputs step while Phase 6 already offered to restate them as a
   declined migration — a decision the user was never asked to make. Declining them also drops

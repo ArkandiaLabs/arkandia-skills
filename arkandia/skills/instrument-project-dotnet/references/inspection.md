@@ -93,10 +93,21 @@ wrong:
 # measure nothing, and you would write an .editorconfig with no evidence behind it — which is
 # exactly what this section exists to prevent. If the command finds no lines, say so and ask;
 # do not fall back to the language default in silence.
-find . -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' -not -path './.git/*' -print0 \
-  | xargs -0 grep -hoE '^ +' \
+# Spaces: the modal leading-space count is the repo's indent width.
+find . -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' -not -path './.git/*' \
+  -exec grep -hoE '^ +' {} + \
   | awk '{print length($0)}' | sort -n | uniq -c | sort -rn | head -5
+
+# Tabs: one number, to compare against the space total above.
+find . -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' -not -path './.git/*' \
+  -exec grep -hcE '^\t' {} + | awk '{n+=$0} END {print n+0, "tab-indented lines"}'
 ```
+
+**Count the tabs separately, and report both.** `^ +` matches spaces only, so a tab-indented repo
+measures nothing at all and lands in the same place as a repo with no evidence — which, per the
+paragraph above, means the answer becomes a question rather than a guess, but a needless one. If
+the tab count dominates, the answer is `indent_style = tab` and there is no width to infer. If
+both are non-trivial the repo is mixed, and that is a finding to report before writing anything.
 
 A dominant count of 2 means the repo indents with 2 spaces, whatever the .NET default is. Check
 `AGENTS.md` and any style section in the docs too — when the docs state a convention and the code

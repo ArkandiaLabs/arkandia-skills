@@ -5,7 +5,7 @@ bash tests/run.sh              # summary
 VERBOSE=1 bash tests/run.sh    # every case
 ```
 
-150 cases. No dependencies beyond `bash`, `sed`, `awk` and `git` — no .NET SDK, no network.
+161 cases. No dependencies beyond `bash`, `sed`, `awk` and `git` — no .NET SDK, no network.
 
 ## Why it exists
 
@@ -18,7 +18,7 @@ executing the scripts against synthetic payloads:
 |---|---|---|
 | `set -o pipefail` | A short-circuiting filter (`grep -q`, `head -1`) raises SIGPIPE, the pipeline reports failure, and the guard falls through to **allow** | No |
 | Backslashes stripped before JSON escapes were translated | `cat .env\necho done` fused into the single token `.envnecho`, which no anchored pattern matches — and multi-line Bash is the normal case, not an exotic one | No |
-| `[;|&\n]` in `sed` | POSIX reads that bracket expression as including the letter **n**, so every `n` became a separator and `feature/my-branch`, `packages.lock.json` and `never run` all shattered | No |
+| `[;\|&\n]` in `sed` | POSIX reads that bracket expression as including the letter **n**, so every `n` became a separator and `feature/my-branch`, `packages.lock.json` and `never run` all shattered | No |
 
 Each is now a case. Reintroduce any of them and the suite goes red — that was verified by
 mutation, not assumed.

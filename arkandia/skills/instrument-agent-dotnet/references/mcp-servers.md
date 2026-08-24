@@ -240,8 +240,12 @@ does not degrade — the server exits and the whole entry is dead.
   # expands "$VAR" before the assignment takes effect, so --dsn receives an empty value and the
   # server fails for a reason that has nothing to do with the DSN you meant to test.
   APP_DSN="<the real value>"
-  npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
-    < /dev/null 2>&1 | head -5
+  # Capture before truncating. Piping straight into `head` hands you HEAD's exit status, so a
+  # server that died on startup reports 0 — the same silent-success shape the hook scripts are
+  # written against.
+  OUT="$(npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
+    < /dev/null 2>&1)"; RC=$?
+  printf '%s\n' "$OUT" | head -5; echo "exit: $RC"
   ```
 
   A connected server says so. Anything else — an unknown flag, a malformed DSN — is a finding now
