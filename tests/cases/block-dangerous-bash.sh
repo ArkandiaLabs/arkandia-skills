@@ -1,4 +1,4 @@
-# Hook 3 — dangerous command blocker. PreToolUse, matcher Bash|PowerShell.
+# Hook 3 — dangerous command blocker. PreToolUse, matcher Bash.
 # PROTECTED_BRANCHES is materialised as main|master.
 H=block-dangerous-bash.sh
 

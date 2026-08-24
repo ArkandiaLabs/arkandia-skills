@@ -89,7 +89,12 @@ wrong:
 
 ```bash
 # Modal leading-space count across the .cs files — the repo's real indent unit.
-grep -rhoE '^ +' --include='*.cs' src tests 2>/dev/null \
+# Walk from the root, not from `src tests`: a repo that lays its projects out any other way would
+# measure nothing, and you would write an .editorconfig with no evidence behind it — which is
+# exactly what this section exists to prevent. If the command finds no lines, say so and ask;
+# do not fall back to the language default in silence.
+find . -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' -not -path './.git/*' -print0 \
+  | xargs -0 grep -hoE '^ +' \
   | awk '{print length($0)}' | sort -n | uniq -c | sort -rn | head -5
 ```
 

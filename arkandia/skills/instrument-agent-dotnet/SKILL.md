@@ -44,8 +44,16 @@ actually contains the artifact they protect.
 
 ## Philosophy (hold these throughout)
 
-- **Never hardcode a version.** MCP servers are installed with `npx -y <package>`, never
-  `<package>@1.2.3`. Read the formatter, the solution path and the audit command out of the repo.
+- **Resolve every version, then pin it.** Read the formatter, the solution path and the audit
+  command out of the repo — never copy them from this file. The same rule decides the MCP
+  packages, and it lands on `npx -y <package>@<resolved version>`: resolve with
+  `npm view <package> version` when you write `.mcp.json`, then write that number down. A bare
+  `npx -y <package>` re-resolves on every session, so a committed `.mcp.json` runs code tomorrow
+  that nobody reviewed today, with the user's own permissions and no record of the change. This is
+  the same reasoning the sibling skill applies to the gitleaks binary in CI: resolving from the
+  source of truth is what "never hardcode" means, and it happens **when the file is written**, not
+  on every run. Bump it like any other dependency — and re-check the flags when you do, since that
+  is when they change.
 - **Encode what the repo already does.** A hook that fires on a legitimate, everyday action is not
   a sensor — it is a bug with a policy attached, and the team disables the whole set to get past
   it. Hook 6 is the clearest case: without central package management, a `Version` attribute is
@@ -168,6 +176,12 @@ let them choose.
 2. **`npx`, only now** — and only if at least one stdio server was chosen. `npx --version`;
    `brew install node` / `winget install OpenJS.NodeJS` / the distro package. Microsoft Learn is
    HTTP and needs nothing.
+
+   **Resolve each chosen package's version in the same step**, with `npm view <package> version`.
+   That number goes into the `args` in Phase 4 and into the report — the entry is
+   `<package>@<resolved version>`, never a bare package name. Resolving here rather than in Phase 4
+   also means a package that no longer exists under the name in `references/mcp-servers.md` is a
+   finding now, while the menu is still open.
 
 3. **Which hooks to install. One hook per option** — the same shape as the server menu above, and
    for the same reason: a reader compares options, not paragraphs. Do not bundle two hooks into
@@ -312,7 +326,8 @@ python3 -c "import json;json.load(open('.claude/settings.json'));print('settings
 
 ### Rules for this phase
 
-- **Never hardcode a version** — `npx -y <package>`, and every command read out of the repo.
+- **Resolve, then pin** — `npx -y <package>@<resolved version>` from `npm view <package> version`,
+  and every command read out of the repo. Report the resolved versions with the file.
 - **Never write a secret**, in either file.
 - **`make format` is deliberately not used by hook 2.** It formats the whole solution; the hook
   formats the file that changed. This is the only place in the Arkandia skills where a Makefile
@@ -423,7 +438,9 @@ Report the rest first, then close with it:
   gitignored, and it can hold anything that passed through a tool;
 - the hooks **not** installed and why — especially a precondition that failed, so nobody believes
   they are covered;
-- the MCP servers as **written, pending approval**, with the two steps to activate them;
+- the MCP servers as **written, pending approval**, with the two steps to activate them, and
+  **the version pinned for each stdio package** — that number is a dependency the team now
+  owns, and a pin nobody knows about is a pin nobody bumps;
 - the known false positives you shipped, hook by hook — starting with `cp .env.example .env`
   being denied by hook 1;
 - **what stays tied to Claude Code**: the scripts in `scripts/agent-hooks/` are plain shell and
@@ -448,7 +465,7 @@ Do not commit. Leave the changes for the user to review.
 | An MCP server stays at `⏸ Pending approval` | The workspace is not trusted. `enableAllProjectMcpServers` in a committed settings file is ignored until it is | Run `claude` in the repo, accept the trust dialog, then `/mcp` |
 | `${CLAUDE_PROJECT_DIR}` expands to nothing in `.mcp.json` | It is set in the server's environment, not Claude Code's, so a project-scoped file always takes the default | Only `${CLAUDE_PROJECT_DIR:-.}` expands at all, and it gives `.`. For an absolute path, use a dedicated env var |
 | A SQLite DSN fails with `unable to open database file` | The path is relative. `sqlite://./x.db` and `sqlite://sub/x.db` both fail; only an absolute path connects | `sqlite://` + an absolute path, supplied through an env var |
-| An MCP server never starts, and nothing in `.mcp.json` looks wrong | A flag the package no longer accepts. `npx -y` resolves the current release, so flags disappear | `npx -y <package> --help < /dev/null` — and always redirect stdin, or the server hangs waiting for a handshake |
+| An MCP server never starts, and nothing in `.mcp.json` looks wrong | A flag the pinned version does not accept — most often after someone bumped the pin without re-reading `--help` | `npx -y <package>@<pinned version> --help < /dev/null` — and always redirect stdin, or the server hangs waiting for a handshake |
 | Hook 6 fires on every `dotnet add package` | It was installed in a repository without central package management, where a `Version` attribute is correct | Remove it. The precondition is `Directory.Packages.props` |
 | The formatter takes tens of seconds per edit | It is running over the solution instead of the edited file | `--include <relative-path>` — and the path must be repo-relative |
 

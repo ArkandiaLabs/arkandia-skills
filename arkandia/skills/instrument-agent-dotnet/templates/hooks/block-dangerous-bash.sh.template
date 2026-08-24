@@ -3,7 +3,13 @@
 #                             from the repo's actual default branch plus any long-lived ones the
 #                             team named. e.g. main|master or main|develop|release
 #
-# Hook 3 — dangerous command blocker. PreToolUse, matcher "Bash|PowerShell".
+# Hook 3 — dangerous command blocker. PreToolUse, matcher "Bash".
+#
+# THE MATCHER IS "Bash", NOT "Bash|PowerShell". Everything below parses shell syntax — splitting on
+# ; && |, dropping VAR=value prefixes, dispatching on the command word — and none of that is
+# PowerShell. Registering it for PowerShell would let `Remove-Item -Recurse -Force C:\` reach the
+# bottom of the loop and exit 0: coverage claimed, nothing checked. Hook 1 is the opposite case and
+# keeps PowerShell on purpose — it matches a path, which is spelled the same in either shell.
 #
 # WHY IT PARSES SUBCOMMANDS INSTEAD OF GREPPING THE WHOLE STRING:
 # A rule written as `grep 'git reset .*--hard'` over the raw command also fires on

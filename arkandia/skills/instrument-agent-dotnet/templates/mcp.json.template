@@ -1,4 +1,8 @@
-// Placeholders: the whole "mcpServers" object. Keep ONLY the servers the team accepted in
+// Placeholders: the whole "mcpServers" object, plus one version per stdio package —
+//   {{AZDEVOPS_MCP_VERSION}}  {{CONTEXT7_MCP_VERSION}}  {{DBHUB_VERSION}}
+// Resolve each one when you write this file, and never copy a number out of this template:
+//   npm view @bytebase/dbhub version
+// Keep ONLY the servers the team accepted in
 // Phase 3, and drop this file to `{"mcpServers": {}}` when they accepted none. An empty skeleton
 // is still worth writing: it is the committed, discoverable place the next server goes.
 //
@@ -35,14 +39,23 @@
 // its own servers. Report control status as "written, pending approval" and give the user the
 // step: run `claude` in the repo, accept the trust dialog, then `/mcp` to check.
 //
-// DO NOT PIN VERSIONS in the npx args. `-y <package>` resolves the current release; a hardcoded
-// version is a bug the day after it is written.
+// PIN EVERY VERSION IN THE NPX ARGS — `-y <package>@<resolved version>`, never a bare
+// `-y <package>`. This file is committed and read at every session start, so an unpinned entry
+// executes whatever npm has published since, with the user's own permissions, on every machine
+// that cloned the repo, and nothing in the history says the code changed. Pinning turns that into
+// a line in a diff someone can review.
 //
-// AND DO NOT PASS A FLAG YOU HAVE NOT CONFIRMED. `-y <package>` resolving the current release
-// cuts both ways: a flag that existed when this template was written may be gone. DBHub's
-// `--readonly` is the worked example — it now exits with "no longer supported" and the server
-// never starts. Confirm each flag against the resolved package before writing it. See
-// references/mcp-servers.md, "Confirming a flag", for how to do that without hanging.
+// The number is RESOLVED, NOT TRANSCRIBED: `npm view <package> version` in this run. Same rule as
+// the gitleaks pin in the sibling skill — "never hardcode a version" means resolve it from the
+// source of truth WHEN THE FILE IS WRITTEN, not re-resolve it on every run. A stale pin is a
+// dependency bump, which is a thing teams already know how to do.
+//
+// AND DO NOT PASS A FLAG YOU HAVE NOT CONFIRMED. A pin freezes the release but not this template:
+// a flag that existed when it was written may be gone from the version you just resolved, and gone
+// again after the next bump. DBHub's `--readonly` is the worked example — it now exits with "no
+// longer supported" and the server never starts. Confirm each flag against the exact version in
+// the args, every time that number changes. See references/mcp-servers.md, "Confirming a flag",
+// for how to do that without hanging.
 //
 // JSON DOES NOT ALLOW COMMENTS. Strip every // line before writing.
 // ---8<--- everything above this line is instructions for you; delete it ---8<---
@@ -51,7 +64,7 @@
     "ark_azdevops": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@azure-devops/mcp", "${ADO_ORGANIZATION}", "--authentication", "pat"],
+      "args": ["-y", "@azure-devops/mcp@{{AZDEVOPS_MCP_VERSION}}", "${ADO_ORGANIZATION}", "--authentication", "pat"],
       "env": { "PERSONAL_ACCESS_TOKEN": "${ADO_PERSONAL_ACCESS_TOKEN}" }
     },
     "ark_mslearn": {
@@ -61,14 +74,14 @@
     "ark_context7": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "args": ["-y", "@upstash/context7-mcp@{{CONTEXT7_MCP_VERSION}}"],
       "env": { "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}" }
     },
     "_comment_context7": "The empty default above is the ONE exception to the no-default rule: Context7 has an anonymous tier, so an unset key degrades to lower rate limits instead of failing. Delete this comment key along with the rest of the header.",
     "ark_dbhub": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@bytebase/dbhub", "--transport", "stdio", "--dsn", "${APP_DSN}"]
+      "args": ["-y", "@bytebase/dbhub@{{DBHUB_VERSION}}", "--transport", "stdio", "--dsn", "${APP_DSN}"]
     }
   }
 }

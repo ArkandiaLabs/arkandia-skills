@@ -213,10 +213,16 @@ public void Ports_should_live_in_application() =>
     .Should().ResideInNamespaceMatching("^<Root>\\.Application\\.Interfaces"));
 
 // No direct console writes outside adapters.
+// NAME THE LAYERS EXPLICITLY, all of them. Selecting only Domain and Application makes the test
+// pass while Persistence and Api write to the console freely — a green test whose name promises
+// something it never checked, which is worse than no test. Add every own production namespace
+// except the ones allowed to write, and update this list when a layer is added.
 [Fact]
 public void Only_adapters_should_write_to_console() =>
   Check(Types().That().ResideInNamespaceMatching(DomainNs)
     .Or().ResideInNamespaceMatching(ApplicationNs)
+    .Or().ResideInNamespaceMatching(PersistenceNs)
+    .Or().ResideInNamespaceMatching(ApiNs)
     .Should().NotDependOnAny(Types().That().HaveFullName("System.Console")));
 
 // No cycles between layers. Slices() lives in its own namespace:

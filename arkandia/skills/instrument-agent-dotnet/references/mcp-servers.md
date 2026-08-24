@@ -45,8 +45,22 @@ the entire point of project scope — so a token written here is a token in the 
 deleting it from the file later does not remove it from there. Put the variable *name* in
 `README.md` so a teammate knows what to export.
 
-**No pinned versions.** `npx -y <package>`, never `<package>@1.2.3`. A version written into this
-file is wrong the week after it is written.
+**Every version resolved at write time, then pinned.** `npx -y <package>@<resolved version>`,
+never a bare `npx -y <package>`. Resolve with `npm view <package> version` in the same run that
+writes the file, and never copy a number out of this reference — it is wrong the week after it is
+written, which is exactly why it is resolved rather than transcribed.
+
+The bare form is worse than stale, not better than it. `.mcp.json` is committed and read on every
+session start, so an unpinned entry executes whatever npm published since — under the user's own
+permissions, on every machine that cloned the repo, with nothing in the history recording that the
+code changed. A pin makes the bump a reviewable line in a diff. It is the same rule the sibling
+skill applies to the gitleaks binary in CI, and for the same reason: "resolve, never hardcode"
+means resolve **when the file is written**, not on every run.
+
+The cost is honest and it is small: the pin goes stale, and a stale pin is a dependency bump —
+re-resolve, re-run the flag check below (a bump is exactly when a flag disappears), commit both
+together. Report every resolved version alongside the file, the way the sibling skill reports
+resolved package versions.
 
 **`${CLAUDE_PROJECT_DIR}` does not give you an absolute path here.** This is the trap that looks
 solved and is not. Claude Code sets that variable in the **server's** environment, not in its own,
@@ -66,7 +80,7 @@ where that pattern comes from — a project-scoped file is not that.
 no default, and the export line in `README.md`.
 
 ```json
-"args": ["-y", "@bytebase/dbhub", "--transport", "stdio", "--dsn", "${APP_DSN}"]
+"args": ["-y", "@bytebase/dbhub@{{DBHUB_VERSION}}", "--transport", "stdio", "--dsn", "${APP_DSN}"]
 ```
 
 ```bash
@@ -128,7 +142,7 @@ uses; if `AZURE_DEVOPS_PAT` is already in their README, do not invent `ADO_PERSO
 "ark_azdevops": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "@azure-devops/mcp", "${ADO_ORGANIZATION}", "--authentication", "pat"],
+  "args": ["-y", "@azure-devops/mcp@{{AZDEVOPS_MCP_VERSION}}", "${ADO_ORGANIZATION}", "--authentication", "pat"],
   "env": { "PERSONAL_ACCESS_TOKEN": "${ADO_PERSONAL_ACCESS_TOKEN}" }
 }
 ```
@@ -146,7 +160,7 @@ rather than failing to start.
 "ark_context7": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "@upstash/context7-mcp"],
+  "args": ["-y", "@upstash/context7-mcp@{{CONTEXT7_MCP_VERSION}}"],
   "env": { "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}" }
 }
 ```
@@ -157,7 +171,7 @@ rather than failing to start.
 "ark_dbhub": {
   "type": "stdio",
   "command": "npx",
-  "args": ["-y", "@bytebase/dbhub", "--transport", "stdio", "--dsn", "${APP_DSN}"]
+  "args": ["-y", "@bytebase/dbhub@{{DBHUB_VERSION}}", "--transport", "stdio", "--dsn", "${APP_DSN}"]
 }
 ```
 
@@ -183,16 +197,21 @@ the report that an agent with a database connection reads whatever the DSN point
 can reach production, that is the user's decision to make knowingly, not a default to slip in.
 
 **Playwright** and **Chrome DevTools** are stdio servers launched with `npx -y`; resolve their
-package names at write time rather than trusting a name written in this file months ago.
+package **names** as well as their versions at write time, rather than trusting a name written in
+this file months ago.
 
 ### Confirming a flag
 
-`npx -y <package>` resolves the current release, which is the point — and which means a flag that
-worked when this reference was written may be gone. Two ways to check, and one way that wastes
+Pinning removes the *drift* — the entry cannot start resolving a different release behind your
+back — but it does nothing about the gap between this reference and the version you just resolved.
+A flag that worked when this file was written may be gone from the release you are about to pin,
+and it is gone again the next time someone bumps the pin. **Check the flags against the exact
+version in the args, every time that number changes.** Two ways to check, and one way that wastes
 several minutes:
 
 ```bash
-npx -y @bytebase/dbhub --help < /dev/null 2>&1 | head -40   # usage, or the error that lists it
+# usage, or the error that lists it
+npx -y @bytebase/dbhub@<the version you resolved> --help < /dev/null 2>&1 | head -40
 ```
 
 **Always redirect stdin from `/dev/null`.** An stdio MCP server started without it sits waiting
@@ -217,7 +236,11 @@ does not degrade — the server exits and the whole entry is dead.
   user to export, and with `< /dev/null` so it exits instead of hanging:
 
   ```bash
-  APP_DSN="<the real value>" npx -y @bytebase/dbhub --transport stdio --dsn "$APP_DSN" \
+  # The assignment goes on its own line. `VAR=x cmd --flag "$VAR"` does NOT work: the shell
+  # expands "$VAR" before the assignment takes effect, so --dsn receives an empty value and the
+  # server fails for a reason that has nothing to do with the DSN you meant to test.
+  APP_DSN="<the real value>"
+  npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
     < /dev/null 2>&1 | head -5
   ```
 

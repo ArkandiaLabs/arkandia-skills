@@ -76,7 +76,11 @@ model writing an API that was renamed two releases ago.
   name goes in the README. A machine-specific path is treated the same way: `${CLAUDE_PROJECT_DIR}`
   does not help in a project-scoped file, because Claude Code sets it in the *server's*
   environment, so it always falls back to `.` and a SQLite connection string rejects that.
-- **Hardcode a version.** `npx -y <package>`, never `<package>@1.2.3`.
+- **Leave an MCP package floating.** Versions are resolved with `npm view <package> version`
+  when the file is written and then pinned — `npx -y <package>@1.2.3`. A bare `npx -y
+  <package>` in a committed `.mcp.json` runs whatever was published since, unreviewed, with
+  the user's permissions. The resolved versions are reported back to you, to bump like any
+  other dependency.
 - **Report a hook as working without having seen it refuse something.**
 
 ## Two asymmetries it states out loud

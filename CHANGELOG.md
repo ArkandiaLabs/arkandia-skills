@@ -35,6 +35,23 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   written, and pinned; the archive is checked against the project's published `checksums.txt`
   before extraction; and the install no longer escalates privileges.
 
+- **`instrument-agent-dotnet` now pins the MCP packages too.** `.mcp.json` launched every stdio
+  server with a bare `npx -y <package>`, so a committed, session-start config executed whatever npm
+  had published since, with the user's own permissions and nothing recording the change. Versions
+  are now resolved with `npm view` when the file is written, pinned in the `args`, and reported —
+  the same "resolve once, then pin" rule the gitleaks change above applies in CI.
+
+- **The dangerous-command blocker no longer claims to cover PowerShell.** Its matcher was
+  `Bash|PowerShell`, but the script parses shell syntax and dispatches on `rm`, `git`, `dotnet`,
+  `nuget` and `sudo` — `Remove-Item -Recurse -Force C:\` reached the end of the loop and exited 0.
+  The matcher is now `Bash`. Hook 1 keeps `PowerShell`, because it matches a path rather than
+  syntax.
+
+- **Lock files are their own Phase 3 question in `instrument-project-dotnet`.** They were generated
+  as part of the reproducible-inputs step while Phase 6 already offered to restate them as a
+  declined migration — a decision the user was never asked to make. Declining them also drops
+  `--locked-mode` from the Makefile and the pipeline in the same run.
+
 - **README restructured.** It is now a catalogue: each skill's detail moved to
   `docs/skills/<name>.md`, with a Spanish counterpart at `docs/skills/<name>-es.md`. A new skill is
   now one file and one table row instead of a section in two long README files.

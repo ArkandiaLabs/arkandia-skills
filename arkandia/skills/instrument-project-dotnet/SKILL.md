@@ -148,20 +148,31 @@ consequence and the cost in files touched, then let them choose.
    in the solution** — state the exact count ("this edits 10 project files") and report the version
    drift you already measured. Offer `Migrate now`, `Skip — keep versions in each project`.
    Recommend migrating: the drift is usually already there and the change is mechanical.
-4. **CI platform** — only if Phase 1 found none or found both. `GitHub Actions`, `Azure DevOps`,
+4. **Lock files** — only if `packages.lock.json` is absent. Right now a restore picks whatever
+   version the feed offers today, so a machine that restores next month can get a different
+   dependency tree from the same commit; a lock file records the tree that was actually resolved
+   and CI then restores in `--locked-mode`, which fails when the lock and the projects disagree.
+   The cost is real and ongoing: **one `packages.lock.json` per project, all of them committed**,
+   and every deliberate version change now needs a `dotnet restore` in the same commit or the
+   build goes red. Offer `Generate lock files`, `Skip — restore resolves fresh each time`.
+   Recommend it only when the team already commits `Directory.Packages.props` or accepted
+   question 3; on a repo where versions still live in ten `.csproj` files, the churn lands on
+   people who have not opted into central versions yet.
+
+5. **CI platform** — only if Phase 1 found none or found both. `GitHub Actions`, `Azure DevOps`,
    `Skip CI for now`.
-5. **Secret scanning** — gitleaks blocks a commit that contains something shaped like a credential,
+6. **Secret scanning** — gitleaks blocks a commit that contains something shaped like a credential,
    and scans history in CI. Off by default, because the first week costs curation: sample
    connection strings and test GUIDs trip it, and each false positive needs an entry in
    `.gitleaksignore`. Offer `Yes — pre-commit and CI`, `CI only`, `Skip`.
-6. **Pipeline scope** — `CI only (quality gates)` or `CI + deploy`. Default to CI only; how this
+7. **Pipeline scope** — `CI only (quality gates)` or `CI + deploy`. Default to CI only; how this
    repo deploys is a separate conversation.
-7. **Warnings as errors** — only if the repo has never built with `TreatWarningsAsErrors`. Turning
+8. **Warnings as errors** — only if the repo has never built with `TreatWarningsAsErrors`. Turning
    it on means today's warnings stop the build. Offer `On, strict` or `On, with a documented list
    of exceptions to work through over time` — the second for any repo with history, and the
    exception list becomes the visible record of the debt. Say how many warnings the current build
    produces.
-8. **One-time reformat** — `.editorconfig` plus `EnforceCodeStyleInBuild` makes the build enforce
+9. **One-time reformat** — `.editorconfig` plus `EnforceCodeStyleInBuild` makes the build enforce
    formatting, and existing files that never followed those rules start failing. Fixing that is a
    single `dotnet format` pass, which rewrites **source files** — a real diff, not config.
 
@@ -184,20 +195,20 @@ consequence and the cost in files touched, then let them choose.
 
    Offer `Reformat now`, `Start style rules at suggestion severity instead`, or `Skip — just report
    the failing files`. Never reformat the repository as a side effect of installing a config file.
-9. **Target framework** — the TFM (`net10.0` and friends) says which .NET each project builds for.
-   Three cases, and only when they arise:
-   - **Projects disagree.** Ask which is authoritative. Do not normalise silently — a project left
-     behind usually has a reason.
-   - **Centralising it.** Moving `<TargetFramework>` into `Directory.Build.props` means deleting it
-     from every `.csproj`; otherwise the projects keep overriding it. Same shape as question 3:
-     off by default, offered with the file count. See **Where the target framework lives** in
-     Phase 4.
-   - **It is already in `Directory.Build.props` but every project overrides it.** The property is
-     inert: the file claims the framework is centralised and nothing honours it. This is the
-     `partial` case from Phase 1, and it is worse than absent because the next reader edits the
-     wrong file. Show the evidence — the property and the projects that override it — and offer
-     `Remove the inert property` or `Finish the migration (edits N project files)`. Never leave it
-     as it is.
+10. **Target framework** — the TFM (`net10.0` and friends) says which .NET each project builds for.
+    Three cases, and only when they arise:
+    - **Projects disagree.** Ask which is authoritative. Do not normalise silently — a project left
+      behind usually has a reason.
+    - **Centralising it.** Moving `<TargetFramework>` into `Directory.Build.props` means deleting it
+      from every `.csproj`; otherwise the projects keep overriding it. Same shape as question 3:
+      off by default, offered with the file count. See **Where the target framework lives** in
+      Phase 4.
+    - **It is already in `Directory.Build.props` but every project overrides it.** The property is
+      inert: the file claims the framework is centralised and nothing honours it. This is the
+      `partial` case from Phase 1, and it is worse than absent because the next reader edits the
+      wrong file. Show the evidence — the property and the projects that override it — and offer
+      `Remove the inert property` or `Finish the migration (edits N project files)`. Never leave it
+      as it is.
 
 **A control that exists but does nothing follows the same rule.** Whenever Phase 1 marked a control
 `partial`, say what is inert and offer both exits — complete it, or remove it. Silence leaves the
@@ -330,11 +341,19 @@ Install in this order — each control builds on the previous one:
         before continuing. The `project.assets.json` left over from the pre-CPM state makes restore
         fail with errors that point at packages, not at the migration — the wrong trail entirely.
         A half-migrated solution does not build.
-   - **Lock files** — add `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` to
-     `Directory.Build.props` and run `dotnet restore`. The generated `packages.lock.json` files
-     belong in version control — leave them in the working tree, list them in the report, and tell
-     the user they must be committed for CI to work. You do not commit them yourself. CI restores
-     in locked mode, which fails when the locks and the projects disagree.
+   - **Lock files** (**only if the user accepted question 4** — never as a side effect of the CPM
+     migration, which is a separate decision they may well have answered the other way) — add
+     `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` to `Directory.Build.props`
+     and run `dotnet restore`. The generated `packages.lock.json` files belong in version control —
+     leave them in the working tree, list them in the report, and tell the user they must be
+     committed for CI to work. You do not commit them yourself. CI restores in locked mode, which
+     fails when the locks and the projects disagree.
+
+     **If they declined, do not write the property**, and say so where it matters: `make ci` and
+     both CI templates pass `--locked-mode`, which fails outright with no lock file present. Drop
+     that flag from the Makefile and the pipeline in the same run, and record the pair in the
+     report — a restore flag that outlives the artifact it depends on is the sort of breakage that
+     surfaces first in someone else's pull request.
 
 2. **`Directory.Build.props`** — repo root. If one exists, merge property groups; never drop
    properties you did not add.
@@ -409,7 +428,7 @@ a pre-existing, committed source file you edited to trigger a break (controls 2,
 | # | Control | Violation | Expected |
 |---|---|---|---|
 | 1 | SDK pin | Set `version` one feature band above what is installed (10.0.400 → `10.0.500`) | `dotnet build` fails, naming the requested version, the `global.json` that asked for it, and the installed SDKs |
-| 1b | Lock files | Bump a version in `Directory.Packages.props` without restoring | `dotnet restore --locked-mode` fails |
+| 1b | Lock files *(only if accepted in Phase 3)* | Bump a version in `Directory.Packages.props` without restoring | `dotnet restore --locked-mode` fails |
 | 2 | Strict build | Add an unused local variable | `dotnet build` fails |
 | 3 | Style | Reorder the `using` directives in a file | `make lint` fails, naming the file |
 | 4 | Entry point | No break needed | `make help` lists every target; `make check` chains them |

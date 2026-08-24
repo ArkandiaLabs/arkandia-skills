@@ -78,7 +78,11 @@ modelo que escribe una API que cambió de nombre hace dos versiones.
   `${CLAUDE_PROJECT_DIR}` no sirve en un archivo de proyecto, porque Claude Code la define en el
   entorno del *servidor*, así que siempre cae al valor por defecto `.` y una cadena de conexión de
   SQLite lo rechaza.
-- **Fijar una versión.** `npx -y <paquete>`, nunca `<paquete>@1.2.3`.
+- **Dejar un paquete MCP sin fijar.** Las versiones se resuelven con `npm view <paquete>
+  version` al escribir el archivo y quedan fijadas — `npx -y <paquete>@1.2.3`. Un `npx -y
+  <paquete>` pelado en un `.mcp.json` commiteado ejecuta lo que se haya publicado desde
+  entonces, sin revisar y con los permisos del usuario. Las versiones resueltas se te
+  reportan, para subirlas como cualquier otra dependencia.
 - **Reportar un hook como funcionando sin haberlo visto negar algo.**
 
 ## Dos asimetrías que dice en voz alta

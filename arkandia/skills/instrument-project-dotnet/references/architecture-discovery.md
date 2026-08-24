@@ -27,9 +27,16 @@ grep -r "ProjectReference" --include="*.csproj" .
 Record, per project: who it references, who references it, and whether it is a test project,
 a library, or an entry point (`Microsoft.NET.Sdk.Web`, `<OutputType>Exe</OutputType>`).
 
-Note the leaves (referenced by nobody but the entry point) and the roots (reference nothing). In a
-layered design the root is the domain; in a feature-organised design there is usually a small
-shared kernel instead.
+**Fix the direction of the graph once, and use it for the rest of the run.** An edge runs *from*
+the project that declares the `ProjectReference` *to* the project it names — so edges point from
+the host inwards. Both ends are then unambiguous, and the two words mean one thing each:
+
+- **Root — no outgoing references.** It depends on nothing else in the solution. In a layered
+  design this is the domain; in a feature-organised design there is usually a small shared kernel
+  instead.
+- **Leaf — no incoming references.** Nothing in the solution depends on it. This is normally the
+  entry point (`Api`, `Web`, `Worker`). A second leaf that is *not* an entry point and *not* a test
+  project is usually dead code, and worth reporting as a finding.
 
 ## 2. Read what the repo says about itself
 
@@ -59,7 +66,8 @@ These hold regardless of architecture and are the floor when nothing else is det
 
 - **No cycles** between projects or namespace slices. A cycle makes the design unlearnable and
   breaks incremental builds.
-- **Nothing references the entry point.** The host project (`Api`, `Web`, `Worker`) is a leaf.
+- **Nothing references the entry point.** The host project (`Api`, `Web`, `Worker`) has no
+  incoming references — the leaf, in the direction fixed in step 1.
 - **Production code does not reference test projects.**
 - **No dependency on a project that is not in the solution's reference graph** — catches stray
   assembly references.

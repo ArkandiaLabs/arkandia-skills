@@ -77,13 +77,13 @@ Four sections:
 
 2. **Checks to run** — one command, stated as the contract:
 
-   ```markdown
+   ````markdown
    ## Checks to run
 
    ```bash
    make check    # single confidence signal: lint + build + test
    ```
-   ```
+   ````
 
 3. **Change-based check matrix** — which command for which kind of change. This is what lets an
    agent pick the cheap check instead of always running everything:

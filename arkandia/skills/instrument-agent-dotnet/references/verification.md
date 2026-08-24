@@ -279,7 +279,10 @@ grep -nE '"(env|headers)"' -A3 .mcp.json    # every value must be ${VAR}, never 
 with `< /dev/null` so it exits instead of waiting for a handshake:
 
 ```bash
-APP_DSN="<the real value>" npx -y @bytebase/dbhub --transport stdio --dsn "$APP_DSN" \
+# The assignment goes on its own line: `VAR=x cmd --flag "$VAR"` expands "$VAR" before the
+# assignment takes effect, so --dsn would receive an empty value.
+APP_DSN="<the real value>"
+npx -y @bytebase/dbhub@<pinned version> --transport stdio --dsn "$APP_DSN" \
   < /dev/null 2>&1 | head -5
 ```
 

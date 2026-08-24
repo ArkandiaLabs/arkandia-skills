@@ -138,7 +138,17 @@ beat. `statusMessage` gives it a line in the spinner, which is the most it will 
 
 ## Hook 3 — Dangerous-command blocker
 
-`PreToolUse`, matcher `Bash|PowerShell`. **Blocks.**
+`PreToolUse`, matcher `Bash`. **Blocks.**
+
+**Why `Bash` alone, when hook 1 also matches `PowerShell`.** The two hooks read the same field and
+mean different things by it. Hook 1 looks for a *path* — `.env`, a `.pem`, `secrets.json` — and a
+path is spelled the same in either shell, so widening its matcher costs nothing and catches more.
+This hook parses *shell syntax*: it splits on `;`, `&&` and `|`, drops leading `VAR=value`
+assignments, and dispatches on the command word against `rm`, `git`, `dotnet`, `nuget`, `sudo`.
+None of that describes PowerShell. `Remove-Item -Recurse -Force C:\` walks straight through every
+rule and exits 0 — a matcher that claims coverage it does not have, which is the one thing a guard
+must never do. If a team genuinely runs PowerShell here, add `PowerShell` back *together with*
+`Remove-Item`/`rd`/`del` rules; never on its own.
 
 **What it does.** Six patterns, each unrecoverable or outward-facing:
 
