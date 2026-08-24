@@ -136,17 +136,30 @@ test in that order.
 ANSI colour codes that can swallow the reason, and a non-zero exit is easy to misattribute. The
 only fact that matters is whether history moved:
 
+**Supply an identity on the command line, and disable signing.** Reading the absence of a commit
+is the right test, but it cannot tell you *why* history did not move. A repo with no `user.name`
+or `user.email` configured — a fresh container, a CI checkout, a machine the user just set up —
+fails before the hook ever runs, and so does a `commit.gpgSign=true` with no key present. Either
+one prints `BLOCKED` and proves nothing. `-c` scopes the identity to this one command and changes
+nothing in the user's config.
+
 ```bash
 make hooks                                    # install the hooks first
+GC='git -c user.name=arkandia-check -c user.email=check@example.invalid -c commit.gpgSign=false'
 HEAD_BEFORE=$(git rev-parse HEAD)
 git add <file>
-git commit -m "test: hook check"              # expected to fail
+$GC commit -m "test: hook check"              # expected to fail
 [ "$HEAD_BEFORE" = "$(git rev-parse HEAD)" ] \
   && echo "BLOCKED — no commit was written" \
   || { echo "NOT BLOCKED — undoing"; git reset --soft "$HEAD_BEFORE"; }
 ```
 
 **Expect:** `BLOCKED`. The same guard applies to control 6.
+
+**Before you trust a `BLOCKED`, prove the commit path works at all.** Run the same `$GC commit` on
+a trivial staged change with the hooks bypassed — `LEFTHOOK=0 $GC commit -m "test: baseline"` —
+and confirm history *does* move, then `git reset --soft` it. A gate that reports `BLOCKED` on a
+repo where nothing can commit is the most convincing false positive in this file.
 
 If it prints `NOT BLOCKED`, the reset above has already undone the commit — now fix the hook. Most
 often `lefthook install` was never run, so `.git/hooks` still holds only `.sample` files. Report
@@ -166,7 +179,11 @@ If gitleaks passes on your test string, suspect the string before the gate: run
 `gitleaks detect --no-banner` on a file containing it to confirm.
 
 ```bash
-git add <file> && git commit -m "test: secret check"
+# Same temporary identity as control 5 — without it a repo with no user.email fails before
+# gitleaks runs, and the gate looks like it blocked something it never saw.
+git add <file>
+git -c user.name=arkandia-check -c user.email=check@example.invalid -c commit.gpgSign=false \
+  commit -m "test: secret check"
 ```
 
 **Expect:** `gitleaks protect --staged` blocks the commit before it exists, with the rule name and
