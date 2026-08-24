@@ -1,9 +1,9 @@
 {
   "name": "arkandia",
-  "version": "0.3.0",
-  "description": "Arkandia's toolkit of AI coding-agent skills. `agent-context-dotnet` bootstraps a documentation pack for a .NET repository — AGENTS.md, architecture, ADRs, data model, infrastructure, plus a `docs/dotnet.md` deep-dive covering the solution/project graph, target frameworks, central package management, Aspire, EF Core, DI, analyzers, packaging and CI — and validates the most important generated claims with you to reduce hallucinations. `linear-plan-build` and `ado-plan-build` take a ticket from read → grill you on the open design decisions → explore → plan → adversarial review → approval only when the change warrants it → test-first build → your repo's gates → PR → babysit CI to green; they share one engine and differ only in their bindings, Linear + GitHub for one and Azure Boards + Azure Repos + Pipelines for the other.",
+  "version": "0.4.0",
+  "description": "AI coding-agent skills from Arkandia for an agentic SDLC.",
   "author": {
-    "name": "Manuel Zapata",
+    "name": "Arkandia",
     "email": "apps@arkandia.co"
   },
   "homepage": "https://github.com/ArkandiaLabs/arkandia-skills",
@@ -21,6 +21,17 @@
     "azure-devops",
     "pull-request",
     "ci",
-    "arkandia"
+    "arkandia",
+    "quality-gates",
+    "linting",
+    "analyzers",
+    "architecture-tests",
+    "instrumentation",
+    "secret-scanning",
+    "central-package-management",
+    "lock-files",
+    "mcp",
+    "hooks",
+    "agent-guardrails"
   ]
 }
