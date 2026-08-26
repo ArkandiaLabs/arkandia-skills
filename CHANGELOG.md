@@ -47,6 +47,30 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   The matcher is now `Bash`. Hook 1 keeps `PowerShell`, because it matches a path rather than
   syntax.
 
+- **The secret read-guard tells opening a file from naming one.** It split the Bash command on
+  whitespace and treated every word as a path, so a commit message, a PR body (`gh pr create
+  --body "... .env ..."`) or an `echo` that mentioned `.env` was denied — a denial that reads as
+  the guard working, so it gets worked around instead of reported, and the workaround ends at
+  turning the hook off. The command is now tokenised by a small shell tokeniser that follows
+  quoting, separators, heredocs and redirections, and drops what nothing opens: `echo`/`printf`
+  operands, heredoc bodies, the value of `-m`/`--body`/`--title`, and the pattern of a `grep` or
+  `sed`. A quoted argument with spaces is kept whole rather than split, so prose cannot match the
+  anchored patterns while `cat "my dir/.env"` still does — unless a shell runs it, and then
+  `bash -c "cat .env"` or `ssh host "cat .env"` is re-scanned as the command it is. Brace
+  expansion is expanded, so `cat {.env,.env.local}` is denied. What redirection opens is still
+  checked: `echo x > .env` stays denied. 161 cases → 185, and one old case changed meaning:
+  `cat .env,other` opens a file of that literal name and is now allowed. What the tokeniser
+  still does not see is written down as cases of its own rather than left to be rediscovered:
+  an `echo` feeding a real reader (`echo .env | xargs cat` — denied by the old split, allowed
+  now, and that is the price of not denying prose), a `-c` nested inside a `-c`, a second brace
+  group, and `curl -F file=@.env`, which misses because `@` is not an anchor character. All four
+  are evasion rather than error, and this guard is a barrier against error.
+
+- **The `settings.json`/`.mcp.json` parse checks use `node`, not `python3`.** The skill already
+  requires Node for its MCP servers and the README already asks for it; Python was an undeclared
+  prerequisite in a .NET workflow. Four one-liners in `SKILL.md`, `mcp-servers.md` and
+  `verification.md`.
+
 - **The hook regression suite no longer writes outside its own fixture.** Two `audit-log` cases
   ran the hook from the runner's directory instead of `$LOGREPO`, and the hook resolves its log
   path from `repo_root` — so every run appended audit rows to the checkout itself. `.gitignore`
