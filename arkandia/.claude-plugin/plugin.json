@@ -1,6 +1,6 @@
 {
   "name": "arkandia",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "AI coding-agent skills from Arkandia for an agentic SDLC.",
   "author": {
     "name": "Arkandia",
@@ -15,6 +15,8 @@
     "harness",
     "onboarding",
     "planning",
+    "requirements",
+    "spec",
     "tdd",
     "implementation",
     "linear",

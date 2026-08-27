@@ -3,7 +3,80 @@
 All notable changes to the `arkandia` plugin. Versions follow the `version` field in
 `arkandia/.claude-plugin/plugin.json`. Dates are the date the work landed on `main`.
 
-## [0.4.0] — unreleased
+## [0.5.0] — unreleased
+
+### Added
+
+- **`requirement-to-spec`** — the other half of the delivery pipeline, upstream of
+  `linear-plan-build`/`ado-plan-build`. Turns a business requirement document (Word, PDF, Excel,
+  Markdown, plus its attachments) into a spec and an ordered task breakdown. Converts any source
+  format to one Markdown model through a pinned `@firecrawl/anydoc@0.2.3`, with native multimodal
+  `Read` as the fallback where the format allows one — PDFs and text, not the binary Office
+  containers `Read` cannot open — and a hard stop, never an invented answer, when neither produces
+  usable content. Reads the target repo's conventions and scans, stack-agnostically, for a public
+  contract the change would touch (OpenAPI, GraphQL, `.proto`, exported library symbols), asking
+  explicitly whether to break it or keep it compatible even when the document itself never raises
+  the question. Finds the project documentation the change leaves stale — architecture, data model,
+  API list, runbooks, ADRs, `AGENTS.md` — by grepping the doc set for the concrete names the
+  requirement touches and listing a document only when it can quote the line that goes false, then
+  asks which of them belong in this pass and turns each confirmed one into its own documentation
+  task naming the file, what is now wrong, and what should replace it. It never edits those
+  documents itself. Sweeps the document for ambiguity across six categories, in batches of at most
+  four jargon-free questions, and always asks where to save the result — the trackers actually
+  detected (Linear, Azure DevOps) plus a local file, never auto-picked even with exactly one
+  tracker found. Derives an ordered task breakdown from the closed decisions, documentation-only
+  tasks first, and rereads what it wrote — the parent-child relation, the initial status, or the
+  file links — before reporting success. Never writes code, never opens a PR, never commits. The
+  asymmetry it leaves: `linear-plan-build`/`ado-plan-build` have no file-mode entry point today, so
+  a run that lands in file mode does not chain automatically into them.
+
+### Changed
+
+- **`linear-plan-build` / `ado-plan-build` now deliver a ticket subissue by subissue.** Step A
+  opens by asking which children this run covers — all of them by default, and whatever is left
+  out is named in the final report rather than quietly dropped. Each selected subissue is then
+  implemented, committed and pushed on its own, carrying **its own** link token so the tracker
+  attaches the commit to the child and not just to the parent, and is commented and moved to the
+  team's review state as it closes. It never marks a subissue done: nothing is merged yet, and
+  that call belongs to whoever reviews the PR. The full gate set, `/code-review` and
+  `/security-review` run **once** over the complete branch diff, and one PR is opened for the
+  whole ticket. If anything on the work list was not implemented — blocked, escalated, abandoned
+  — there is no PR at all: the run reports what is missing and leaves the branch pushed so nothing
+  built is lost. Both skills keep one branch and one PR per ticket, so no worktree isolation is
+  involved.
+- **The plan is now a file.** Step C writes `.claude/plans/<TICKET>.md` and keeps it current while
+  the work runs — the work list with each item's state, the Decisions, the Assumptions and the
+  test verdicts. It is a working notebook, not the archive: it survives a session that dies or
+  gets compacted so a resumed run continues instead of re-deriving everything, it is never staged
+  and never committed on the skill's initiative, and Step J asks whether to delete it, keep it, or
+  move it into the repo's own documentation. The permanent record stays where people look for it:
+  the PR body and the tracker comment.
+- **Assumptions now carry provenance.** Each one is written with its source — `file:line`,
+  `inferred`, or `none` — plus what would falsify it, and an assumption sourced `none` about a
+  public contract, a data schema, auth or a money path is reclassified as what it actually is: a
+  Step A question that was never asked. This is the lightweight answer to the question of whether
+  the delivery skills needed `agent-context-dotnet`'s claim ledger; they did not, they needed
+  sourced assumptions.
+- **Tests the change invalidates are settled before any code is written.** The Step B exploration
+  now also returns the existing tests over every symbol in play, and each gets a verdict in the
+  plan: **update** in the same step that changes the code, **delete** while naming what stopped
+  being covered, or **escalate** — a test asserting something the ticket never mentioned means
+  either the change breaks more than anyone said, or that test is the only place the requirement
+  was ever written down. Previously this surfaced at Step I, as a red CI job, which is exactly
+  where "the test is in the way" turns into loosening it.
+- **`linear-plan-build` checks the GitHub half of its bindings up front.** Phase 0 gained a
+  prerequisites step — `gh --version`, `gh auth status`, and that `origin` is actually a GitHub
+  remote — with per-OS install commands and the same install-nothing-yourself posture as the
+  `instrument-*` skills. An unauthenticated `gh` used to surface at Step H, after a full
+  implementation had already been paid for.
+- **Both delivery skills gained the family's canonical sections** — `Philosophy`, `References` and
+  `Troubleshooting` — which until now only the context and instrumentation skills carried. The
+  troubleshooting tables are per-tracker: MCP pending-approval vs absent, `AB#<id>` as the only
+  link syntax Boards honours, acceptance criteria that the Basic process does not define, HTML
+  descriptions, states that differ per process, and a CI watch that returns instantly because no
+  run has registered yet.
+
+## [0.4.0] — 2026-08-25
 
 ### Added
 
