@@ -12,7 +12,7 @@ description: >
   Invoke with `/arkandia:ado-plan-build [work item id | URL] [skip-checkpoint]`.
 argument-hint: "[work item id (2, #2, or its URL)] [skip-checkpoint]"
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv *), Bash(go *), Bash(cargo *), Bash(dotnet *), Bash(mvn *), Bash(gradle *), Bash(./gradlew*), Bash(bundle *), Bash(rake *), Bash(composer *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm test*), Bash(npm run *), Bash(npm ci*), Bash(npm install*), Bash(npx *), Bash(pnpm test*), Bash(pnpm run *), Bash(pnpm install*), Bash(yarn test*), Bash(yarn run *), Bash(yarn install*), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv run *), Bash(uv sync*), Bash(go test*), Bash(go build*), Bash(go vet*), Bash(cargo test*), Bash(cargo build*), Bash(cargo clippy*), Bash(cargo fmt*), Bash(dotnet test*), Bash(dotnet build*), Bash(dotnet restore*), Bash(dotnet format*), Bash(mvn test*), Bash(mvn verify*), Bash(mvn package*), Bash(gradle test*), Bash(gradle build*), Bash(gradle check*), Bash(./gradlew test*), Bash(./gradlew build*), Bash(./gradlew check*), Bash(bundle exec *), Bash(bundle install*), Bash(rake *), Bash(composer install*), Bash(composer run *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
 ---
 
 # Azure Boards work item → shipped feature
@@ -27,6 +27,38 @@ assumes.
 
 **Read `references/build-loop.md` now.** It is the body of this skill, not optional
 background. This file supplies the Azure DevOps bindings it asks for.
+
+## Philosophy (hold these throughout)
+
+- **A work item is a pointer, not a specification.** Requirements get negotiated in the
+  discussion as often as they are written in a field. Read it first, then grill the user on what
+  is still open — a wrong assumption costs one question here and an implementation at Step F.
+- **Never invent a requirement.** A fetch that fails, an empty `System.Description`, an
+  acceptance-criteria field the process does not even define — name it and ask. An id is not a
+  specification either.
+- **The repository is the system of record.** A board column, a tag, a linked blocker marked done
+  — none of those are evidence. Confirm a dependency against `git log` and the code.
+- **Read the process, don't assume it.** Work item types, their fields and their states are
+  per-process. Basic, Agile and Scrum disagree about all three, and guessing produces a plan
+  built on a field that does not exist.
+- **No architecture is assumed.** Read what this repo actually does and follow it. Never plan
+  against a pattern it does not use, and never propose adopting one; that is a separate
+  conversation, not a side effect of a work item.
+- **Evidence beats claims.** You run the gates yourself and paste their real output — a subagent
+  reporting "tests pass" is a claim, the gate's own output is evidence. Same for Pipelines: a run
+  that never queued is not a green run, and an absent pipeline is not a green pipeline.
+- **One checkpoint, and it has to be earned.** Step E stops the run only when the change's shape
+  demands it. Stopping on a routine fix teaches the user to skim your plans; not stopping on a
+  schema migration is how you lose them.
+- **Autonomy ends at the PR.** Push it, open it, babysit it to green — never complete it, never
+  set auto-complete, never bypass a branch policy, never deploy.
+- **A silent run is a run nobody trusts.** Say which step you are on, what you just changed, and
+  what you are waiting for — in plain sentences the person who wrote the work item can follow, not
+  in raw tool output. See § *Say what you are doing* in `references/build-loop.md`.
+- **A finished child item is marked finished.** Each child that is implemented, gated and pushed
+  moves to the process's completed state as it closes. The **parent** is what waits on the PR.
+- **Keep the tracker footprint minimal.** State and discussion on the work item you are building,
+  and nothing else in Boards, ever.
 
 ## Autonomy contract
 
@@ -107,6 +139,9 @@ a specification.
 Print a concise summary: title, type, state, assignee, area and iteration path, tags,
 branch name, linked and child items, and the decisions buried in the discussion.
 
+**Print the child items even when there is only one** — that list is what Step A asks the
+user to choose from, and it is the work list for the rest of the run.
+
 **Board state is not authoritative.** Flag every linked blocker that isn't done, and
 before treating a dependency as met, confirm it against `git log` and the code rather
 than against a column on a board.
@@ -118,12 +153,14 @@ per access path are in `references/ado-access.md`.
 
 | Binding | Azure DevOps |
 |---|---|
-| `TICKET` | the work item, plus any child items you work |
+| `TICKET` | the work item — the parent |
+| `SUB-TICKETS` | its child work items — the same comment and state operations, against the child's id |
 | `STATUS→IN-PROGRESS` | set the item's in-progress state — see **States** below |
-| `STATUS→IN-REVIEW` | set the item's review state — see **States** below |
+| `STATUS→IN-REVIEW` | set the item's review state — see **States** below — used on the **parent**, which waits on the PR |
+| `STATUS→DONE` | set a **child** item's completed state — see **States** below — once it is implemented, gated and pushed |
 | `COMMENT` | add to the item's discussion |
 | `BRANCH` | the Phase 2 branch |
-| `LINK-TOKEN` | **`AB#<id>`** in the commit message — that exact syntax is what makes Boards attach the commit; a bare `#2` does nothing |
+| `LINK-TOKEN` | **`AB#<id>`** — that exact syntax is what makes Boards attach the commit; a bare `#2` does nothing. Each Step F.6 commit carries **the child item's own id**; the PR is opened with the parent's. **With no child items the work list is `TICKET` itself, so its id is the one in every commit as well** |
 | `OPEN-PR` | `az repos pr create … --work-items <id>`, or the MCP equivalent |
 | `CI` | Azure Pipelines runs for the branch — `az pipelines runs list --branch <b>`, then `az pipelines runs show --id <run>` |
 | `PR-COMMENTS` | the PR's comment threads — `az repos pr show`, plus thread discovery per `references/ado-access.md` |
@@ -131,9 +168,9 @@ per access path are in `references/ado-access.md`.
 **States are per-process, so read them, don't assume.** Basic uses
 `To Do` / `Doing` / `Done`; Agile uses `New` / `Active` / `Resolved` / `Closed`; Scrum
 uses `New` / `Approved` / `Committed` / `Done`. Read the item's current
-`System.State` and its type, pick the state that actually means in-progress or in
-review for that process, and name the one you picked. A state write is never worth
-blocking the work over — if nothing fits, say so and carry on.
+`System.State` and its type, pick the state that actually means in-progress, in review
+or **completed** for that process, and name the one you picked for each. A state write
+is never worth blocking the work over — if nothing fits, say so and carry on.
 
 **Branch policies matter here.** An Azure Repos PR often can't complete without CI
 green plus a reviewer approval. That's the point: this skill drives CI to green and
@@ -152,9 +189,54 @@ addresses the review comments, then leaves the completion to a human.
 - **Migrations.** If the change needs a schema migration, use the repo's own migration
   command — whatever `AGENTS.md`, the `Makefile`, or the toolchain defines. Don't
   assume migrations run on startup.
+- **The plan file.** Step C writes `.claude/plans/<TICKET>.md` and keeps it current
+  while the work runs — a working notebook, never staged and never committed on the
+  skill's initiative. Step J asks what to do with it.
 - **Keep secrets out of the shell and the commit.** Don't stage `.env` files, keys, or
   tokens, and never echo a PAT into a command, a commit message, or a PR body.
+- **Deleting the plan file is the one step that asks.** `allowed-tools` is static and
+  `<TICKET>` is not, so no grant can say "this ticket's plan and no other" — a
+  `Bash(rm .claude/plans/*)` would authorise deleting every other ticket's plan too. The
+  grant is therefore absent on purpose: Step J's "Delete it" runs
+  `rm .claude/plans/<TICKET>.md`, exactly that path, and costs one permission prompt.
+  One prompt for the only destructive step in the run, right after the user chose it, is
+  the correct trade.
+- **The Bash allowlist is narrowed to the subcommands this run actually uses**, so a
+  package publish, an arbitrary GitHub API mutation or an unrelated tool prompts instead
+  of running silently. `gh api` is scoped to the inline-review-comment path — the one
+  place the skill needs it. Two grants stay wide on purpose and are worth knowing about:
+  `git add`/`git push` and `npx`. A glob cannot express "not `-A`" or "not `--force`",
+  and the gate a repo defines may legitimately be `npx <anything>`; the controls there
+  are the textual rules in `references/build-loop.md` (stage only what the item touched,
+  never `git add -A`, never force-push, never merge). A team that wants a hard boundary
+  rather than an instruction should add `permissions.deny` rules in `settings.json` —
+  deny wins over any allowlist, including this one.
 - **Gate commands.** The mainstream runners (`make`, `npm`/`pnpm`/`yarn`, `pytest`,
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
   fake a gate to avoid a permission dialog.
+
+## References
+
+| Reference | Used by | What it covers |
+|---|---|---|
+| `build-loop.md` | Phase 4 | The body of the skill: Steps A → J — grilling the user, exploring, drafting the plan, the three-lens adversarial review, the conditional approval checkpoint, test-first implementation, the repo's gates, commit/push/PR, the Pipelines-and-review-comments watch loop, and the complete Escalation list |
+| `ado-access.md` | Phase 0, Phase 1, Phase 4 | The MCP-vs-`az` operation map, the discovery steps for the two operations the CLI has no first-class command for, and the auth troubleshooting for both paths |
+
+## Troubleshooting
+
+| Symptom | Almost always | Confirm with |
+|---|---|---|
+| No `mcp__azure-devops__*` tools **and** `az` fails | Neither access path is set up, or the workspace is not trusted so a project-scoped MCP server never loaded | `/mcp`, then `az account show`. A pending-approval server behaves exactly like an absent one. Report **both** setup options, per Phase 0 |
+| `az` calls fail with an auth error | The login expired, or the `azure-devops` extension is missing | `az account show`, `az extension list`. Full auth troubleshooting for both paths is in `ado-access.md` |
+| The work item has no acceptance criteria | The **Basic** process `Issue` type does not define `Microsoft.VSTS.Common.AcceptanceCriteria` at all — only Agile/Scrum types do | Read `System.WorkItemType` first, and ask for the field only when the type defines it. Its absence is never an empty requirement |
+| Tags leak into the plan, or the description reads as markup | `System.Description` and the acceptance criteria come back as **HTML**, not Markdown | Render to text before reasoning over them |
+| The state write lands in the wrong column | The state was matched by name against the wrong process — Basic, Agile and Scrum use different sets | Read the item's current `System.State` and its type, pick the state that means in-progress, in-review or completed **for that process**, and name the one you picked |
+| Child work items sit active after their work shipped | Step F.6.4 was skipped, or the process's completed state was never resolved | Each child closes into `STATUS→DONE` as Step F.6 finishes it; only the parent stays in review, waiting on the PR |
+| Boards never links the commit or the PR to the item | `LINK-TOKEN` is wrong, or the wrong id is used. Only **`AB#<id>`** works — a bare `#2` does nothing — and **each Step F.6 commit carries its own CHILD id while the PR is opened against the PARENT**; one id everywhere leaves each child with no commit attached | The exact `AB#<id>` string in each commit, with the id of the child that commit closes, plus `--work-items <parent id>` on the PR |
+| The PR cannot be completed even on green | A branch policy requires a reviewer approval as well | Expected, not a bug. This skill drives CI to green and answers the comments; completing it is a human's call |
+| No pipeline run appears for the branch | Either the repo has no pipeline, or none is triggered by this branch | `az pipelines runs list --branch <branch>`. If there genuinely is no CI, say so and skip to the review-comment half of Step I — an absent pipeline is **not** a green pipeline, and Step J must name it as a skipped gate |
+| Phase 2 stops on a dirty working tree | By design. Stashing someone's uncommitted work is not this skill's call | `git status`. Commit or stash it yourself, then re-run |
+| Two subagents overwrite each other's edits in Step F | Steps that converge on the same file were dispatched in parallel | Step F.2: converging steps stay **serial** in one agent. Parallelize the thinking (subagents return diffs, you apply them), not the writes |
+| `EnterPlanMode` errors, or the plan is presented twice | The session was already in plan mode | Step E: when already in plan mode, go straight to `ExitPlanMode` |
+| The same gate fails three times in a row | Not a reason to keep iterating — classify it: test, code, environment, or plan drift | Step F.5, and § Escalation in `build-loop.md`. An ambiguous failure is an escalation, never a guess |

@@ -39,7 +39,8 @@ framework from the *AI-Driven Development* workshop.
 | `agent-context-dotnet` | **Context** — bootstraps `AGENTS.md`, architecture, ADRs, data model, infrastructure and a `docs/dotnet.md` deep-dive for a .NET repo, then validates the load-bearing claims with you | [→](./docs/skills/agent-context-dotnet.md) |
 | `instrument-project-dotnet` | **Deterministic instrumentation** — installs the eight gates a coding agent hits by itself, in the build, the hooks and the pipeline, and proves each one fails before reporting success | [→](./docs/skills/instrument-project-dotnet.md) |
 | `instrument-agent-dotnet` | **Non-deterministic instrumentation** — registers the team's MCP servers, then installs a catalogue of Claude Code hooks (secret read-guard, scoped auto-format, dangerous-command blocker, advisory sweep, audit log, and guards for central package management and generated files), firing every one of them before reporting success | [→](./docs/skills/instrument-agent-dotnet.md) |
-| `linear-plan-build` · `ado-plan-build` | **Delivery** — a ticket to a green PR: grill → explore → plan → adversarial review → test-first build → your gates → PR → babysit CI. Linear + GitHub, or Azure Boards + Azure Repos + Pipelines | [→](./docs/skills/plan-build.md) |
+| `requirement-to-spec` | **Spec** — turns a business requirement document (Word/PDF/Excel/Markdown + attachments) into a spec and an ordered task breakdown, filed in Linear, Azure Boards, or a local file — always asking where | [→](./docs/skills/requirement-to-spec.md) |
+| `linear-plan-build` · `ado-plan-build` | **Delivery** — a ticket to a green PR: pick the subissues → grill → explore → plan → adversarial review → test-first build, a commit and push per subissue → your gates → one PR → babysit CI. Linear + GitHub, or Azure Boards + Azure Repos + Pipelines | [→](./docs/skills/plan-build.md) |
 
 ## Install
 
@@ -84,6 +85,12 @@ Inside any .NET repository:
 
 /arkandia:instrument-project-dotnet      # deterministic: the eight controls
 /arkandia:instrument-agent-dotnet        # non-deterministic: MCP servers + hooks
+```
+
+In any repository, whatever the stack — these four assume no particular architecture:
+
+```
+/arkandia:requirement-to-spec requirements.docx     # a requirement doc → spec + task breakdown
 
 /arkandia:linear-plan-build ABC-123                 # a Linear issue → green PR
 /arkandia:linear-plan-build ABC-123 skip-checkpoint # routine issue: no approval stop

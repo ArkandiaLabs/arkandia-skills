@@ -3,7 +3,224 @@
 All notable changes to the `arkandia` plugin. Versions follow the `version` field in
 `arkandia/.claude-plugin/plugin.json`. Dates are the date the work landed on `main`.
 
-## [0.4.0] — unreleased
+## [0.5.0] — unreleased
+
+### Added
+
+- **`requirement-to-spec`** — the other half of the delivery pipeline, upstream of
+  `linear-plan-build`/`ado-plan-build`. Turns a business requirement document (Word, PDF, Excel,
+  Markdown, plus its attachments) into a spec and an ordered task breakdown. Converts any source
+  format to one Markdown model through a pinned `@firecrawl/anydoc@0.2.3`, with native multimodal
+  `Read` as the fallback where the format allows one — PDFs and text, not the binary Office
+  containers `Read` cannot open — and a hard stop, never an invented answer, when neither produces
+  usable content. Reads the target repo's conventions and scans, stack-agnostically, for a public
+  contract the change would touch (OpenAPI, GraphQL, `.proto`, exported library symbols), asking
+  explicitly whether to break it or keep it compatible even when the document itself never raises
+  the question. Finds the project documentation the change leaves stale — architecture, data model,
+  API list, runbooks, ADRs, `AGENTS.md` — by grepping the doc set for the concrete names the
+  requirement touches and listing a document only when it can quote the line that goes false, then
+  asks which of them belong in this pass and turns each confirmed one into its own documentation
+  task naming the file, what is now wrong, and what should replace it — placed **after** the
+  functional work it describes and blocking nothing, since a page is rewritten to match what was
+  built. It never edits those documents itself. Sweeps the document for ambiguity across seven categories, in batches of at most
+  four jargon-free questions, and always asks where to save the result — the trackers actually
+  detected (Linear, Azure DevOps) plus a local file, never auto-picked even with exactly one
+  tracker found. Every validation criterion it surfaces — the rule the business will check the
+  result against, usually written as background — gets asked about rather than assumed: whether it
+  becomes its own item in the breakdown, and only then whether the rest of the work waits for it.
+  Derives an ordered task breakdown from the closed decisions — functional work first, dependencies
+  written out rather than implied by order — and rereads what it wrote — the parent-child relation, the initial status, or the
+  file links — before reporting success. Never writes code, never opens a PR, never commits. The
+  asymmetry it leaves: `linear-plan-build`/`ado-plan-build` have no file-mode entry point today, so
+  a run that lands in file mode does not chain automatically into them.
+
+### Changed
+
+- **`linear-plan-build` / `ado-plan-build` now deliver a ticket subissue by subissue.** Step A
+  opens by asking which children this run covers — all of them by default, and whatever is left
+  out is named in the final report rather than quietly dropped. Each selected subissue is then
+  implemented, committed and pushed on its own, carrying **its own** link token so the tracker
+  attaches the commit to the child and not just to the parent, and is commented and **moved to the
+  team's completed state** as it closes — a child that is implemented, gated and pushed is finished
+  as a unit of work, and leaving it in progress makes the board claim there is work left that
+  nobody is doing. The **parent** is the one that waits: it goes to the review state at Step J and
+  stays there until someone merges the PR. The full gate set, `/code-review` and
+  `/security-review` run **once** over the complete branch diff, and one PR is opened for the
+  whole ticket. If anything on the work list was not implemented — blocked, escalated, abandoned
+  — there is no PR at all: the run reports what is missing and leaves the branch pushed so nothing
+  built is lost. Both skills keep one branch and one PR per ticket, so no worktree isolation is
+  involved.
+- **The run narrates itself in plain language.** The build loop gained a standing rule: one line
+  when a step opens and one when it closes, every state change announced as it happens — the
+  branch, each tracker status and which state was picked, each commit and push, the PR URL, the CI
+  run being waited on — written for the person who filed the ticket rather than for the diff
+  reviewer, and never printed ahead of the fact. A long autonomous run whose only output is tool
+  noise is a run nobody can follow.
+- **Implementation is delegated by default; the main session orchestrates.** Step F now hands the
+  editing to subagents that report what they changed instead of returning file contents, keeping
+  the orchestrator's context for the plan, the gates, the pushes and the user. Steps that must run
+  in order still do — in one subagent, rather than in the main session.
+- **Comments follow the repo, not the agent.** Step F carries an explicit restraint: match the
+  surrounding comment density (usually none), write one only where a reader would otherwise ask
+  *why*, never narrate your own change, apply the same rule to config and project files, and write
+  them in the language the repo's code already uses.
+- **The plan is now a file.** Step C writes `.claude/plans/<TICKET>.md` and keeps it current while
+  the work runs — the work list with each item's state, the Decisions, the Assumptions and the
+  test verdicts. It is a working notebook, not the archive: it survives a session that dies or
+  gets compacted so a resumed run continues instead of re-deriving everything, it is never staged
+  and never committed on the skill's initiative, and Step J asks whether to delete it, keep it, or
+  move it into the repo's own documentation. The permanent record stays where people look for it:
+  the PR body and the tracker comment.
+- **Assumptions now carry provenance.** Each one is written with its source — `file:line`,
+  `inferred`, or `none` — plus what would falsify it, and an assumption sourced `none` about a
+  public contract, a data schema, auth or a money path is reclassified as what it actually is: a
+  Step A question that was never asked. This is the lightweight answer to the question of whether
+  the delivery skills needed `agent-context-dotnet`'s claim ledger; they did not, they needed
+  sourced assumptions.
+- **Tests the change invalidates are settled before any code is written.** The Step B exploration
+  now also returns the existing tests over every symbol in play, and each gets a verdict in the
+  plan: **update** in the same step that changes the code, **delete** while naming what stopped
+  being covered, or **escalate** — a test asserting something the ticket never mentioned means
+  either the change breaks more than anyone said, or that test is the only place the requirement
+  was ever written down. Previously this surfaced at Step I, as a red CI job, which is exactly
+  where "the test is in the way" turns into loosening it.
+- **`linear-plan-build` checks the GitHub half of its bindings up front.** Phase 0 gained a
+  prerequisites step — `gh --version`, `gh auth status`, and that `origin` is actually a GitHub
+  remote — with per-OS install commands and the same install-nothing-yourself posture as the
+  `instrument-*` skills. An unauthenticated `gh` used to surface at Step H, after a full
+  implementation had already been paid for.
+- **Both delivery skills gained the family's canonical sections** — `Philosophy`, `References` and
+  `Troubleshooting` — which until now only the context and instrumentation skills carried. The
+  troubleshooting tables are per-tracker: MCP pending-approval vs absent, `AB#<id>` as the only
+  link syntax Boards honours, acceptance criteria that the Basic process does not define, HTML
+  descriptions, states that differ per process, and a CI watch that returns instantly because no
+  run has registered yet.
+
+### Fixed
+
+- **`instrument-agent-dotnet`'s secret read-guard: four bypasses the 0.4.0 tokeniser opened.** That
+  tokeniser exists for a good reason — the whitespace split before it denied prose, and a denial
+  that looks like the guard working gets worked around rather than reported — but each of its four
+  drops was drawn one inch too wide, and each inch was a payload that `main` had denied and 0.4.0
+  allowed. `echo "$(cat .env)"` — the operand of a text emitter was dropped whole, substitution
+  included, while the unquoted `echo $(cat .env)` still denied, so a quick check made the guard look
+  intact. `cat -t .env` and `sort -b .env` — `-t` and `-b` were on the message-flag list, so the
+  file after them was skipped as if it were a commit subject. `python -c "open('.env')"` — the
+  re-scan of a `-c` argument was gated on the argument containing a space, so anything fitting in
+  one word walked through, `node -e` included. And an unterminated `<<EOF` ran the body skip to end
+  of input, which switched the guard off for every command after it. Now: the text inside `$(…)` or
+  backticks is re-scanned as its own command in a suppressed segment too (the text inside only —
+  nesting the whole token would put the sentence's own words back in the operand list); short
+  message flags are gated on the command being `git`/`gh`/`hub`/`glab` while the long forms stay
+  unconditional; a quoted `-c` argument is re-scanned whether or not it holds a space, and an
+  interpreter's `-e` counts as one; and a heredoc with no delimiter fails closed, rewinding and
+  tokenising its body as ordinary commands. Fifteen cases added to `tests/run.sh`, nine of which
+  fail against 0.4.0 — the other six pin the legitimate cases each fix could have re-denied.
+  `AGENTS.md`'s standing caveat is unchanged and still true: this hook runs with the user's shell
+  and matches text, not intent. It is a guardrail against mistakes, not a security barrier — but a
+  guardrail that appears to cover a case and does not is worse than one known to be incomplete.
+
+- **The same guard again: two false positives the fixes above introduced, and the five paths they
+  did not reach.** Closing four bypasses moved the line, and the line landed on ordinary work.
+  `sudo git commit -m "chore: ignore .env"` was denied — and `timeout`, `nohup`, `env` and `xargs`
+  the same way: the command name was read off the first word of the segment, so a wrapper answered
+  for the command it runs, `git` never set the message-flag gate, and the commit message came back
+  as a command to re-scan. `echo "$(date) adds .env to .gitignore (see PR)"` was denied too: the
+  substitution re-scan closed at the **last** `)` in the token instead of the balanced one, so a
+  single parenthesis of prose dragged the sentence back into the operand list — re-denying, exactly,
+  the case the tokeniser was written to allow. Both were silent against the suite, because every
+  "must not fire" case it had used `git`/`gh` as the first word and prose with no parentheses in it.
+  Now: `$(…)` closes on the balanced paren; wrappers are walked past — their flags, a `timeout`
+  duration, an `env` assignment — and the word they actually run is what classifies the segment.
+
+  With the line back where it belongs, the re-scan was widened to where it had always claimed to
+  reach. It now runs on **every** token before any rule can drop it, so `git commit -m "$(cat
+  .env)"`, `gh pr create --body "$(cat .env)"`, `cat <<< "$(cat .env)"` and `KEY="$(cat .env)"` are
+  denied instead of allowed; a substitution in a heredoc **body** is scanned unless a quoted
+  delimiter (`<<'EOF'`) turned expansion off; both substitution forms in one token are found rather
+  than only the first; and `,` joins `/` and `=` as an anchor in `SECRET_PATTERNS`, which is what
+  `perl -e "open(F,'.env')"` needs — putting the comma in the tokeniser's separators instead would
+  have broken brace expansion, which needs its commas inside the token.
+
+  The re-scan budget is now spent in **bytes appended** rather than in a count of four calls. Four
+  ordinary substitutions — `cd "$(git rev-parse --show-toplevel)"` and three like it — used to
+  exhaust it, after which the rest of the command went unscanned in silence. The bound is still
+  finite; it is no longer reachable by commands an agent writes all day. Twenty-three cases added,
+  pinning both the false positives and the paths.
+
+- **`linear-plan-build` / `ado-plan-build`: a ticket with no subissues no longer goes Done and then
+  backwards.** The work list falls back to the ticket itself when it has no children, and Step F.6.4
+  closed "the sub-ticket" without an exception for that case — so the board showed Done before a PR
+  existed and Step J then walked it back to In Review, a state the binding tables define as the
+  parent's alone. F.6.4 now comments and leaves the status alone when the item is the parent.
+  Two more gaps around the same move: fixes made in Step G and Step I had no commit rule at all once
+  commit and push moved into F.6 — Step H then demanded a clean tree that nothing was allowed to
+  produce — and a gate finding against a child already at Done left the tracker permanently
+  asserting a verification that had failed. Step G and Step I now point at the F.6.1–F.6.3 rules,
+  and a red gate sends the affected child back through F.6.4. `Bash(rm .claude/plans/*)` is granted,
+  scoped to that path, so Step J's recommended "Delete it" is an option the run can actually carry
+  out.
+
+- **`requirement-to-spec`: the database cross-check can no longer be reported as "not connected".**
+  A database MCP server is detected by the *shape* of its tools, so it cannot be named in
+  `allowed-tools` ahead of time and the first query prompts. That prompt is the run working; what is
+  now forbidden in writing is folding a refused or failed query into "no database connected" when
+  Phase 1 recorded that one is. The report separates the two and names the tool that was tried. The
+  Azure DevOps write path gains an explicit floor of tool names past the two attested readers —
+  a guess at the spelling, marked as one, since a name the server does not expose costs nothing and
+  one it spells differently costs a single prompt.
+
+- **Review de PR: doce hallazgos más, en los tres skills y en la documentación.**
+  `plan-build` (ado + linear): "All of them" ya no reabre hijos en estado terminal — se listan
+  con su estado para que el usuario pueda elegirlos a propósito, pero fuera del default — y un hijo
+  cuya dependencia no está seleccionada ni completa se pregunta antes de construir, en vez de
+  fallar tarde en Step G sobre un diff que nunca fue coherente. El plan file se actualiza *dentro*
+  del ítem, no solo al cerrarlo, para que una sesión interrumpida no pierda todo desde el último
+  cierre. Step J reporta "CI verde" **solo si hay CI y pasó**; un repo sin pipeline se reporta como
+  "sin CI configurado", nunca en silencio ni en verde. El troubleshooting de ambos skills decía que
+  una misma clave debía aparecer en branch, commit y PR — imposible desde que cada commit lleva la
+  clave de su propio sub-ticket; ahora dice qué clave va en cada sitio. Y la allowlist de Bash se
+  estrechó a los subcomandos que la corrida usa (`gh api` queda acotado a la ruta de comentarios
+  inline; los gestores de paquetes ya no pueden publicar), con nota explícita de los dos comodines
+  que quedan a propósito — `git add`/`git push` y `npx` — y de que un límite duro se pone con
+  `permissions.deny`, no con una allowlist.
+
+  `requirement-to-spec`: el nombre del archivo temporal lleva un id de corrida de seis caracteres —
+  la ruta era función pura del documento, así que dos corridas simultáneas se pisaban el Markdown y
+  una podía leer lo que convirtió la otra, algo que Phase 5 no detecta porque verifica existencia y
+  enlaces, no identidad del contenido. La conversión con `npx` va acotada por un timeout explícito
+  del tool Bash: sin red `npx` no falla, se cuelga resolviendo el registry, y la cadena que espera
+  su código de salida nunca llegaba al modo degradado — justo cuando hace falta. La regla de
+  adjunto ausente es ahora una sola en los tres archivos: se reporta, no se pregunta; lo que sí
+  puede volverse pregunta es el vacío de alcance. Y la ruta MCP de Azure DevOps queda definida de
+  punta a punta — descubrir por forma las tres operaciones, reportar cuál respondió, tratar una
+  forma sin match como pregunta *antes* del prompt de destino, poner el padre en la creación cuando
+  la tool lo acepta, y verificar leyendo el hijo de vuelta.
+
+  Documentación: `external I/O` documentado como condición de `/security-review`; "el modo archivo
+  siempre funciona" matizado a lo que de verdad garantiza; y los ejemplos de las cuatro skills
+  agnósticas de stack salieron del bloque "dentro de cualquier repositorio .NET" en ambos README.
+
+- **Y el mismo guard una vez más: un paréntesis entre comillas es texto, no estructura.** El
+  escaneo balanceado contaba *todo* `)`, así que una sustitución podía cerrarse sola en uno que
+  solo estaba imprimiendo — `echo "$(printf ')'; cat .env)"` dejaba el read fuera del re-escaneo
+  mientras bash sí lo ejecuta. Arreglarlo destapó el bug espejo en el tokenizador: un `$(...)`
+  reinicia el quoting de su propio cuerpo, así que el siguiente `"` del texto no es necesariamente
+  el cierre de la cadena externa, y `echo "$(printf "(" ; cat .env)"` partía el token antes del
+  read. Los dos escaneos son ahora conscientes de comillas y escapes, y el lector de comillas
+  dobles copia la sustitución completa y balanceada en vez de cortar en el primer `"`. Cinco casos
+  nuevos, incluido el del otro lado — conciencia de comillas no puede volver a convertir prosa en
+  operandos.
+
+- **`plan-build`: el grant de borrado se retira, y la clave del padre cubre la corrida sin hijos.**
+  `Bash(rm .claude/plans/*)` autorizaba borrar los planes de todos los tickets para poder borrar
+  uno; `allowed-tools` es estático y `<TICKET>` no, así que no hay glob que ate una cosa a la otra.
+  Queda ausente a propósito: "Delete it" corre `rm .claude/plans/<TICKET>.md` y pide permiso una
+  vez, que es el trade correcto para el único paso destructivo de la corrida. Y la regla de commit
+  nombraba solo la clave del sub-ticket, que en una corrida sin hijos no existe — las tablas de
+  binding, F.6.2 y las dos guías dicen ahora que ahí la clave del padre va en todos los commits.
+
+## [0.4.0] — 2026-08-25
 
 ### Added
 

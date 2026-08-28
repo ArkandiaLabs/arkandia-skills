@@ -108,6 +108,118 @@ EOF')"
 check $H deny 'probe rm'                 "$(payload_bash 'rm -f .env.hooktest')"
 check $H deny 'probe check-ignore'       "$(payload_bash 'git check-ignore -v hooktest/.env')"
 
+# --- the four the tokeniser regressed, and the cases each fix must not re-deny -----------------
+# Every one of these DENIED before the tokeniser landed and ALLOWED after it. They are regressions
+# against behaviour that existed, not gaps the tokeniser was always going to have — which is what
+# separates them from the known limits below.
+
+# 1. A command substitution inside an operand of `echo`. The operand is dropped as output, and the
+#    substitution went with it. `echo $(cat .env)` — no quotes — always denied, because the
+#    parentheses are separators there: a quick check made the guard look like it worked.
+check $H deny 'substitution in echo'     "$(payload_bash 'echo "$(cat .env)"')"
+check $H deny 'backticks in echo'        "$(payload_bash 'echo "`cat .env`"')"
+check $H deny 'substitution in printf'   "$(payload_bash 'printf %s "$(cat .env)"')"
+# Only the text inside the substitution is re-scanned. Nesting the whole token would put the
+# sentence's own words back in the operand list and re-deny the prose the tokeniser exists to allow.
+check $H silent 'prose beside a subst'   "$(payload_bash 'echo "adds .env to .gitignore $(date)"')"
+
+# 2. `-t` and `-b` are message flags for git and gh and for nothing else. Skipping the word after
+#    them skipped the file being read.
+check $H deny 'cat -t'                   "$(payload_bash 'cat -t .env')"
+check $H deny 'sort -b'                  "$(payload_bash 'sort -b .env')"
+check $H silent 'gh -t is still a title' "$(payload_bash 'gh pr create -t "chore: ignore .env" -b "adds .env"')"
+check $H silent 'git -m is still a msg'  "$(payload_bash 'git commit -m "chore: ignore .env"')"
+
+# 3. A `-c` payload with no spaces in it. The re-scan was gated on the argument containing a space,
+#    so anything that fits in one word walked through — and `open('"'"'.env'"'"')` is one word.
+check $H deny 'python -c'                "$(payload_bash "python -c \"open('.env')\"")"
+check $H deny 'node -e'                  "$(payload_bash "node -e \"require('fs').readFileSync('.env')\"")"
+check $H deny 'bash -c, one word'        "$(payload_bash 'bash -c "cat|.env"')"
+# `-e` is only a program for an interpreter. Everywhere else it is a pattern or an escape switch.
+check $H silent 'grep -e is a pattern'   "$(payload_bash "grep -e '\\.env' .gitignore")"
+check $H deny 'grep -e INTO the file'    "$(payload_bash "grep -e KEY .env")"
+
+# 4. A heredoc whose delimiter never arrives. The skip ran to end of input, so everything after it
+#    was never tokenised: one truncated command turned the guard off for the rest of the payload.
+#    It now fails closed — the body is rewound and scanned as ordinary commands.
+check $H deny 'unterminated heredoc'     "$(payload_bash 'cat <<EOF
+never closed
+cat .env')"
+check $H silent 'terminated heredoc'     "$(payload_bash 'cat <<EOF
+mentions .env
+EOF
+git status')"
+
+# --- the two false positives the tokeniser's own fixes introduced ------------------------------
+# Both ALLOWED before the substitution re-scan landed and DENIED after it, and the suite stayed
+# green through both, because every "must not fire" case above happens to use `git`/`gh` as the
+# first word of the segment and prose with no parentheses in it. These pin the two axes that were
+# free to move.
+
+# A wrapper does not name the command. `sudo`/`timeout`/`nohup`/`env`/`xargs` marked the segment
+# shellish while leaving msgish unset, so `-m` was not skipped and the message was re-scanned.
+check $H silent 'sudo git commit -m'     "$(payload_bash 'sudo git commit -m "chore: ignore .env"')"
+check $H silent 'timeout git commit -m'  "$(payload_bash 'timeout 60 git commit -m "chore: ignore .env"')"
+check $H silent 'nohup git commit -m'    "$(payload_bash 'nohup git commit -m "adds .env note"')"
+check $H silent 'env VAR= git commit -m' "$(payload_bash 'env FOO=bar git commit -m "adds .env note"')"
+check $H silent 'sudo -u then git'       "$(payload_bash 'sudo -u deploy git commit -m "ignore .env"')"
+# ...and the wrapper must not hide a real read either.
+check $H deny 'sudo cat'                 "$(payload_bash 'sudo cat .env')"
+check $H deny 'timeout cat'              "$(payload_bash 'timeout 5 cat .env')"
+check $H deny 'sudo bash -c'             "$(payload_bash 'sudo bash -c "cat .env"')"
+
+# One prose parenthesis after a substitution. The re-scan closed at the LAST `)` of the token, so
+# the sentence around the substitution came back as operands.
+check $H silent 'prose paren after subst' "$(payload_bash 'echo "$(date) adds .env to .gitignore (see PR)"')"
+check $H silent 'subst then issue ref'   "$(payload_bash 'echo "$(git rev-parse HEAD) touches .env handling (see #12)"')"
+check $H silent 'commit msg with paren'  "$(payload_bash 'git commit -m "chore: ignore .env (see #12)"')"
+
+# --- the substitution re-scan reaches every token ---------------------------------------------
+# Each of these dropped its token before reaching the re-scan, and the substitution went with it.
+check $H deny 'subst in -m'              "$(payload_bash 'git commit -m "$(cat .env)"')"
+check $H deny 'subst in --body'          "$(payload_bash 'gh pr create --body "$(cat .env)"')"
+check $H deny 'subst after <<<'          "$(payload_bash 'cat <<< "$(cat .env)"')"
+check $H deny 'subst in assignment'      "$(payload_bash 'KEY="$(cat .env)"')"
+check $H deny 'subst in heredoc body'    "$(payload_bash 'cat <<EOF
+$(cat .env)
+EOF')"
+# A quoted delimiter turns expansion off, so the body really is data.
+check $H silent 'quoted heredoc delim'   "$(payload_bash "cat <<'EOF'
+\$(cat .env)
+EOF")"
+# Both substitution forms in one token: the scan used to return at most one, and tried `$(` first.
+check $H deny 'subst then backticks'     "$(payload_bash 'echo "$(date) `cat .env`"')"
+
+# An interpreter argument list. `,` separates arguments, so the file name is not the tail of an
+# identifier — it is the argument. Adding `,` to the tokeniser separators instead would have
+# broken brace expansion, which needs its commas inside the token.
+check $H deny 'node arg list'            "$(payload_bash "node -e \"fs.readFile('.env', cb)\"")"
+check $H deny 'perl arg list'            "$(payload_bash "perl -e \"open(F,'.env')\"")"
+check $H deny 'ruby arg list'            "$(payload_bash "ruby -e \"File.read('.env')\"")"
+# The comma is an anchor; a space still is not, or every sentence would match.
+check $H silent 'comma in prose'         "$(payload_bash 'gh pr create -t "add .env.example" -b "documents .env, .env.local and keys"')"
+
+# --- a paren inside quotes is text, not structure ----------------------------------------------
+# The balanced-paren scan counted every `)`, so a substitution could close itself early on one it
+# was merely printing, and the read after it fell out of the re-scan while bash still ran it. The
+# double-quote scan had the mirror bug: a `$(...)` resets quoting for its own body, so the next `"`
+# in the text is not necessarily the end of the outer string.
+check $H deny 'paren printed inside subst' "$(payload_bash "echo \"\$(printf ')'; cat .env)\"")"
+check $H deny 'many parens printed'        "$(payload_bash "echo \"\$(printf '))))'; cat .env)\"")"
+check $H deny 'quote reopened in subst'    "$(payload_bash 'echo "$(printf \"(\" ; cat .env)"')"
+check $H deny 'closing paren in dquotes'   "$(payload_bash 'echo "$(printf \")\" ; cat .env)"')"
+# ...and quoting awareness must not turn prose back into operands.
+check $H silent 'quoted subst then prose'  "$(payload_bash "echo \"\$(printf 'hola') adds .env (see PR)\"")"
+
+# --- the re-scan budget is spent in bytes, not in calls ----------------------------------------
+# Four ordinary substitutions used to exhaust a four-call budget, and everything after them went
+# unscanned. This is the shape an agent writes all day; the read at the end must still be seen.
+check $H deny 'reads after 4 substs'     "$(payload_bash 'cd "$(git rev-parse --show-toplevel)"
+echo "branch: $(git branch --show-current)"
+echo "files: $(git status --porcelain | wc -l)"
+echo "head: $(git rev-parse --short HEAD)"
+bash -c "cat .env"')"
+
 # --- known limits: what the tokeniser does not see -------------------------------------------
 # None of these is an oversight. This guard is a barrier against mistakes, not against evasion:
 # an operand of `echo` opens nothing, and dropping it is exactly what stops the guard denying
