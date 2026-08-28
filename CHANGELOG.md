@@ -76,6 +76,30 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   descriptions, states that differ per process, and a CI watch that returns instantly because no
   run has registered yet.
 
+### Fixed
+
+- **`instrument-agent-dotnet`'s secret read-guard: four bypasses the 0.4.0 tokeniser opened.** That
+  tokeniser exists for a good reason — the whitespace split before it denied prose, and a denial
+  that looks like the guard working gets worked around rather than reported — but each of its four
+  drops was drawn one inch too wide, and each inch was a payload that `main` had denied and 0.4.0
+  allowed. `echo "$(cat .env)"` — the operand of a text emitter was dropped whole, substitution
+  included, while the unquoted `echo $(cat .env)` still denied, so a quick check made the guard look
+  intact. `cat -t .env` and `sort -b .env` — `-t` and `-b` were on the message-flag list, so the
+  file after them was skipped as if it were a commit subject. `python -c "open('.env')"` — the
+  re-scan of a `-c` argument was gated on the argument containing a space, so anything fitting in
+  one word walked through, `node -e` included. And an unterminated `<<EOF` ran the body skip to end
+  of input, which switched the guard off for every command after it. Now: the text inside `$(…)` or
+  backticks is re-scanned as its own command in a suppressed segment too (the text inside only —
+  nesting the whole token would put the sentence's own words back in the operand list); short
+  message flags are gated on the command being `git`/`gh`/`hub`/`glab` while the long forms stay
+  unconditional; a quoted `-c` argument is re-scanned whether or not it holds a space, and an
+  interpreter's `-e` counts as one; and a heredoc with no delimiter fails closed, rewinding and
+  tokenising its body as ordinary commands. Fifteen cases added to `tests/run.sh`, nine of which
+  fail against 0.4.0 — the other six pin the legitimate cases each fix could have re-denied.
+  `AGENTS.md`'s standing caveat is unchanged and still true: this hook runs with the user's shell
+  and matches text, not intent. It is a guardrail against mistakes, not a security barrier — but a
+  guardrail that appears to cover a case and does not is worse than one known to be incomplete.
+
 ## [0.4.0] — 2026-08-25
 
 ### Added

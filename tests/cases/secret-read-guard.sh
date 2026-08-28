@@ -108,6 +108,48 @@ EOF')"
 check $H deny 'probe rm'                 "$(payload_bash 'rm -f .env.hooktest')"
 check $H deny 'probe check-ignore'       "$(payload_bash 'git check-ignore -v hooktest/.env')"
 
+# --- the four the tokeniser regressed, and the cases each fix must not re-deny -----------------
+# Every one of these DENIED before the tokeniser landed and ALLOWED after it. They are regressions
+# against behaviour that existed, not gaps the tokeniser was always going to have — which is what
+# separates them from the known limits below.
+
+# 1. A command substitution inside an operand of `echo`. The operand is dropped as output, and the
+#    substitution went with it. `echo $(cat .env)` — no quotes — always denied, because the
+#    parentheses are separators there: a quick check made the guard look like it worked.
+check $H deny 'substitution in echo'     "$(payload_bash 'echo "$(cat .env)"')"
+check $H deny 'backticks in echo'        "$(payload_bash 'echo "`cat .env`"')"
+check $H deny 'substitution in printf'   "$(payload_bash 'printf %s "$(cat .env)"')"
+# Only the text inside the substitution is re-scanned. Nesting the whole token would put the
+# sentence's own words back in the operand list and re-deny the prose the tokeniser exists to allow.
+check $H silent 'prose beside a subst'   "$(payload_bash 'echo "adds .env to .gitignore $(date)"')"
+
+# 2. `-t` and `-b` are message flags for git and gh and for nothing else. Skipping the word after
+#    them skipped the file being read.
+check $H deny 'cat -t'                   "$(payload_bash 'cat -t .env')"
+check $H deny 'sort -b'                  "$(payload_bash 'sort -b .env')"
+check $H silent 'gh -t is still a title' "$(payload_bash 'gh pr create -t "chore: ignore .env" -b "adds .env"')"
+check $H silent 'git -m is still a msg'  "$(payload_bash 'git commit -m "chore: ignore .env"')"
+
+# 3. A `-c` payload with no spaces in it. The re-scan was gated on the argument containing a space,
+#    so anything that fits in one word walked through — and `open('"'"'.env'"'"')` is one word.
+check $H deny 'python -c'                "$(payload_bash "python -c \"open('.env')\"")"
+check $H deny 'node -e'                  "$(payload_bash "node -e \"require('fs').readFileSync('.env')\"")"
+check $H deny 'bash -c, one word'        "$(payload_bash 'bash -c "cat|.env"')"
+# `-e` is only a program for an interpreter. Everywhere else it is a pattern or an escape switch.
+check $H silent 'grep -e is a pattern'   "$(payload_bash "grep -e '\\.env' .gitignore")"
+check $H deny 'grep -e INTO the file'    "$(payload_bash "grep -e KEY .env")"
+
+# 4. A heredoc whose delimiter never arrives. The skip ran to end of input, so everything after it
+#    was never tokenised: one truncated command turned the guard off for the rest of the payload.
+#    It now fails closed — the body is rewound and scanned as ordinary commands.
+check $H deny 'unterminated heredoc'     "$(payload_bash 'cat <<EOF
+never closed
+cat .env')"
+check $H silent 'terminated heredoc'     "$(payload_bash 'cat <<EOF
+mentions .env
+EOF
+git status')"
+
 # --- known limits: what the tokeniser does not see -------------------------------------------
 # None of these is an oversight. This guard is a barrier against mistakes, not against evasion:
 # an operand of `echo` opens nothing, and dropping it is exactly what stops the guard denying
