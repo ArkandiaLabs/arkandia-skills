@@ -201,6 +201,25 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   siempre funciona" matizado a lo que de verdad garantiza; y los ejemplos de las cuatro skills
   agnósticas de stack salieron del bloque "dentro de cualquier repositorio .NET" en ambos README.
 
+- **Y el mismo guard una vez más: un paréntesis entre comillas es texto, no estructura.** El
+  escaneo balanceado contaba *todo* `)`, así que una sustitución podía cerrarse sola en uno que
+  solo estaba imprimiendo — `echo "$(printf ')'; cat .env)"` dejaba el read fuera del re-escaneo
+  mientras bash sí lo ejecuta. Arreglarlo destapó el bug espejo en el tokenizador: un `$(...)`
+  reinicia el quoting de su propio cuerpo, así que el siguiente `"` del texto no es necesariamente
+  el cierre de la cadena externa, y `echo "$(printf "(" ; cat .env)"` partía el token antes del
+  read. Los dos escaneos son ahora conscientes de comillas y escapes, y el lector de comillas
+  dobles copia la sustitución completa y balanceada en vez de cortar en el primer `"`. Cinco casos
+  nuevos, incluido el del otro lado — conciencia de comillas no puede volver a convertir prosa en
+  operandos.
+
+- **`plan-build`: el grant de borrado se retira, y la clave del padre cubre la corrida sin hijos.**
+  `Bash(rm .claude/plans/*)` autorizaba borrar los planes de todos los tickets para poder borrar
+  uno; `allowed-tools` es estático y `<TICKET>` no, así que no hay glob que ate una cosa a la otra.
+  Queda ausente a propósito: "Delete it" corre `rm .claude/plans/<TICKET>.md` y pide permiso una
+  vez, que es el trade correcto para el único paso destructivo de la corrida. Y la regla de commit
+  nombraba solo la clave del sub-ticket, que en una corrida sin hijos no existe — las tablas de
+  binding, F.6.2 y las dos guías dicen ahora que ahí la clave del padre va en todos los commits.
+
 ## [0.4.0] — 2026-08-25
 
 ### Added
