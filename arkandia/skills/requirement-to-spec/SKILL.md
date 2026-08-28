@@ -6,7 +6,8 @@ description: >
   a single Markdown model regardless of source format, reads the target repo's conventions, public
   contracts and existing documentation to catch what the document leaves implicit — including which
   architecture, data-model or ADR pages the change would leave stale — sweeps the text for ambiguity across
-  a fixed set of categories (scope, contradictions, currency/units, buried scope creep), asks the
+  a fixed set of categories (scope, contradictions, currency/units, buried scope creep, validation
+  criteria stated as background), asks the
   business reader about each one in jargon-free batches, derives an ordered task breakdown from the
   answers, and writes the result — always asking where: the trackers detected, or a local file. Not
   a summary of the document; it is the half of the pipeline that turns a paragraph into something
@@ -175,7 +176,7 @@ Use `AskUserQuestion`, **at most 4 questions per call**, the recommended option 
 question written for someone who does not read code — no "contract", "endpoint", "schema" without
 one clause explaining what it means for them. Ask **only what Phase 1 could not resolve**.
 
-Five requirements are always active here, never conditional on the agent "deciding to look":
+Six requirements are always active here, never conditional on the agent "deciding to look":
 
 1. **Public-contract impact**, if Phase 1 detected one this change touches — ask explicitly whether
    to break it or keep it compatible, per `references/repo-context-impact.md`. If Phase 1 found no
@@ -189,16 +190,22 @@ Five requirements are always active here, never conditional on the agent "decidi
    is never reported as one that found nothing.
 3. **Documentation impact**, if Phase 1 step 4 found any document the change leaves stale — present
    the list **with the quoted evidence** and ask, in one `AskUserQuestion`, which ones get updated
-   in this pass. Each one the user keeps becomes a documentation-only task at the front of the
-   breakdown; each one excluded goes in the report's **Out of scope**, named. This is a scope
-   decision, never a derivation: bolting four documentation tasks onto a two-task change widens the
-   change, and that is not the skill's call. Per `references/repo-context-impact.md`. Nothing
-   detected, or no docs in the repo → say so and move on; do not propose creating a doc set.
+   in this pass. Each one the user keeps becomes its own task **after** the functional work it
+   describes, blocking nothing; each one excluded goes in the report's **Out of scope**, named. This
+   is a scope decision, never a derivation: bolting four documentation tasks onto a two-task change
+   widens the change, and that is not the skill's call. Per `references/repo-context-impact.md`.
+   Nothing detected, or no docs in the repo → say so and move on; do not propose creating a doc
+   set.
 4. **Missing attachments** — reported, not asked. An attachment Phase 1 could not find is a fact,
    not a decision; state it in the report and move on.
 5. **The ambiguity sweep**, batched in groups of ≤4 — follow `references/interview.md` for the
    category list, the scope-creep double question (two calls, never one), and how to record
    **Decisions** (quoted) and **Assumptions** (settled without asking, written down anyway).
+6. **Validation criteria** — a rule the business will check the delivered work against, wherever it
+   surfaces (in the document or in an answer). Two questions, in `references/interview.md`'s
+   double-question shape: does it become its own item in the breakdown or only a note in the spec,
+   and — only if it becomes an item — does the rest of the work wait for it. Never fold one into
+   the prose on your own, and never make one a blocker the user did not ask for.
 
 Then, **always**, ask where to save the result: `AskUserQuestion` with the trackers Phase 1 actually
 detected (0, 1, or 2) plus **"Local file"**, in that order, never auto-selected even when exactly
@@ -208,10 +215,12 @@ tracker first", so the question is a real one; if it is declined outright, nothi
 implies.
 
 Once the Decisions are closed, **derive the task breakdown** — its own activity, not a side effect
-of the interview. Documentation-only tasks come first, as their own item with no code or tests:
-declaring a contract, writing an ADR, and **each project document requirement 3 confirmed** — named,
-with what has to change in it. Functional tasks that depend on them follow. `references/interview.md`
-covers the derivation rule.
+of the interview. **Functional tasks first; documentation follows the work it describes.** Each
+project document requirement 3 confirmed becomes its own task placed after that work — named, with
+what has to change in it — and blocks nothing. The only documentation task that goes first is one
+the code is written *against* (a contract or schema declaration, an ADR recording the decision a
+task implements), and only when you can name the functional task that cannot start without it.
+Blockers exist only where the user said so. `references/interview.md` covers the derivation rule.
 
 ## Phase 4 — Apply
 
@@ -285,7 +294,11 @@ Do not commit. Leave everything for the user to review.
 - Do NOT auto-pick a tracker, even when Phase 1 finds exactly one. Always ask, and always include
   "Local file" as an option.
 - Do NOT decide, on your own, whether a public contract breaks or stays compatible, where a
-  scope-creep item gets registered, or which stale project documents get updated in this pass. Ask.
+  scope-creep item gets registered, which stale project documents get updated in this pass, or
+  whether a validation criterion becomes a task and whether it blocks anything. Ask.
+- Do NOT front-load or block the breakdown on documentation. A documentation task follows the work
+  it describes, unless the code is literally written against that document — and then name the
+  functional task that cannot start without it.
 - Do NOT list a project document as affected because its category sounds related. Open it, find the
   line the change makes false, and quote it — or leave the document off the list.
 - Do NOT edit the project's own documentation. This skill emits a task per document; the delivery

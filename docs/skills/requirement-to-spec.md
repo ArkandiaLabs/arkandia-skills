@@ -35,27 +35,33 @@ resolved answers into something buildable.
 3. **Find the documentation the change makes wrong** — the architecture page, the data-model doc,
    the API list, the runbook, the ADR the change supersedes, `AGENTS.md`. Not by category: the skill
    greps your doc set for the concrete names the requirement touches and only lists a document when
-   it can quote the line that goes stale. Each one you confirm becomes its own documentation task at
-   the front of the breakdown, naming the file, what is now false, and what should replace it; each
-   one you exclude is recorded by name as out of scope. The skill never edits those documents —
+   it can quote the line that goes stale. Each one you confirm becomes its own documentation task
+   **after** the functional work it describes — blocking nothing, because a page is rewritten to
+   match what was built — naming the file, what is now false, and what should replace it; each one
+   you exclude is recorded by name as out of scope. The skill never edits those documents —
    that is what the delivery skills do with the task.
 4. **Cross-check data**, if a database MCP server is connected — detected by what its tools look
    like, not by a fixed name — comparing a tabular attachment against the real numbers and reporting
    any discrepancy with the exact figures on both sides.
 5. **Sweep for ambiguity** — implicit scope, text-vs-attachment contradictions, behavior gaps,
    inconsistent numbers, scope arriving casually at the end of a document, undeclared currency or
-   units. Asked in batches of at most four, in plain language, recommended option first. Scope creep
+   units, validation criteria written as background. Asked in batches of at most four, in plain language, recommended option first. Scope creep
    is two questions, not one: does it belong in this change, and — if not — does it get a note in
    the spec or its own item in the breakdown. No fixed default; decided every time — and the second
    question is asked in terms of the breakdown, not the tracker, because where the result gets
-   filed is not decided until step 6.
+   filed is not decided until step 6. A **validation criterion** — the rule your business will
+   check the delivered work against, usually written as background — gets the same two-question
+   treatment: does it become its own item, and only then does the rest of the work wait for it. The
+   skill never turns one into a blocker you didn't ask for.
 6. **Ask where to save** — always, even with only one tracker detected, never auto-picked: the
    trackers actually found (Linear, Azure DevOps) plus **Local file**, in that order. With no
    tracker connected the question still gets asked, with "stop here and wire one up first" as the
    real alternative; decline it and nothing is written.
-7. **Derive the task breakdown** from the closed decisions — documentation-only tasks (declare a
-   contract, write an ADR, update each stale document from step 3) come first as their own item,
-   functional tasks that depend on them follow, the dependency stated explicitly.
+7. **Derive the task breakdown** from the closed decisions — functional tasks first, each stale
+   document from step 3 as its own task after the work it describes, and dependencies written out
+   rather than implied by the order. Only a document the code is literally written against (a
+   contract or schema declaration, an ADR recording the decision a task implements) goes first, and
+   then the task says which functional task needed it. Blockers exist only where you said so.
 8. **Write it** — a parent issue/work item plus linked children in tracker mode, resolving the
    initial status by category rather than a hardcoded name; or `docs/specs/<slug>/spec.md` +
    `docs/specs/<slug>/tasks.md` in file mode.

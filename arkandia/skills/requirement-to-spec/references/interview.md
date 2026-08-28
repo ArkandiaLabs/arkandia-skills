@@ -22,6 +22,10 @@ documents where it does.
   easy to read past because it doesn't look like a requirement.
 - **Undeclared currency or unit** — a price, a weight, a duration with no unit stated, where the
   team's context does not make the default obvious.
+- **Validation criteria stated as background** — a rule the business will check the delivered work
+  against ("the totals have to match the invoice", "an order without a customer is rejected"),
+  written as context rather than as a requirement. See § *Validation criteria* below: it is never
+  folded silently into the prose and never promoted to a task on your own.
 
 ## The requirements that are always active
 
@@ -48,6 +52,34 @@ document itself raises them:
    jargon without one clause of explanation. The person answering is in the business, more reliably
    than in `instrument-*`'s already-strict rule for that — do not let a technical term slip through
    unexplained.
+6. **Validation criteria** — every criterion the sweep surfaces gets the two questions in
+   § *Validation criteria* below. Never decide on your own that one is "just context" or that it
+   blocks the rest of the work.
+
+## Validation criteria: two questions, not one
+
+A requirement document — or the user, answering a sweep question — routinely carries a
+**validation criterion**: the rule the business will check the result against before accepting it.
+It arrives phrased as background ("of course the totals have to match the invoice"), and it is
+usually real work: a check to implement, a report to reconcile, a test to write.
+
+Two things you never do with one: fold it silently into the spec's prose as if it were context,
+or turn it into a task yourself. Ask, in order:
+
+1. **"Does this validation become its own item in the breakdown, or is it only a note in the
+   spec?"**
+2. **Only if it becomes an item: "Does the rest of the work wait for this validation, or can it be
+   built alongside?"** — a blocking criterion goes ahead of the items it gates, with the dependency
+   written out in the breakdown; a non-blocking one is an ordinary item in the normal order.
+
+Q2 only makes sense once Q1 came back "its own item", so it goes in a **later `AskUserQuestion`
+call**, batched with the next round — the same shape as scope creep below. There is **no default**
+for either question: it is decided per criterion, every time, never reused from a previous
+criterion or a previous run.
+
+The result must match what was chosen. "Note in the spec" ends as a line in the spec and nothing
+else; "its own item" ends as a real item, and only an answer of "the rest waits" ever makes it a
+blocker.
 
 ## Scope creep: two questions, not one
 
@@ -87,19 +119,28 @@ Two lists, carried forward into the spec exactly as the delivery skills carry th
 This is its own activity once the Decisions are closed — not something that falls out of the
 interview as a side effect.
 
-1. **Documentation-only tasks first** — declaring a typed contract, writing an ADR for a breaking
-   change, **updating each project document the user confirmed in requirement 3**, any task whose
-   entire output is prose or a declaration with no code and no test cycle. Each gets **its own
-   subissue/work item**, never folded as a note inside the first functional task.
-
-   A confirmed documentation task names three things or it is not actionable: **which file**, **what
-   in it is now false** (the quoted line from Phase 1), and **what it should say instead** once the
-   functional work lands. A task that says "update the docs" is the failure this whole step exists
-   to prevent. For a superseded ADR the task is "write a new ADR superseding `ADR-00N`" — never
-   "edit `ADR-00N`".
-2. **Functional tasks that depend on a documentation-only task come after it**, and the dependency
-   is explicit in the breakdown — not merely implied by ordering.
-3. Everything else follows in the order the spec's own sections present it, grouped so that a
+1. **The functional tasks carry the change; documentation follows it.** A document that describes
+   the system is rewritten to match what was built, so it cannot come first: putting a
+   "update `docs/database.md`" task at the head of the breakdown, or marking a code task as blocked
+   by it, inverts the real dependency and stalls the delivery on prose. **Every document confirmed
+   in requirement 3 becomes a task placed after the functional work it describes, and blocks
+   nothing.** Each still gets **its own subissue/work item** — never folded as a note inside a
+   functional task — and each still names three things or it is not actionable: **which file**,
+   **what in it is now false** (the quoted line from Phase 1), and **what it should say instead**
+   once the functional work lands. "Update the docs" is the failure this step exists to prevent.
+   For a superseded ADR the task is "write a new ADR superseding `ADR-00N`" — never "edit
+   `ADR-00N`".
+2. **A documentation task goes first only when the code is written *against* it**, and only when
+   you can say which functional task cannot start without it — a typed contract or schema
+   declaration the implementation consumes, or an ADR recording a decision the work implements.
+   That is the whole exception, it is argued case by case in the task itself, and it never extends
+   to "we should document this before we change it".
+3. **A validation criterion is a blocker only if the user said so** (§ *Validation criteria*).
+   Otherwise it is an ordinary item in the normal order.
+4. **Write dependencies out, don't imply them by ordering.** Wherever one item genuinely waits on
+   another, the breakdown says which and why; every item with nothing written is free to be picked
+   up on its own.
+5. Everything else follows in the order the spec's own sections present it, grouped so that a
    `linear-plan-build`/`ado-plan-build` run against any single item has what it needs without
    reading the others first.
 

@@ -52,9 +52,10 @@ changes and stops there; meanwhile `docs/database.md` still describes the old co
 person to read it acts on a document that is now wrong.
 
 **This skill never edits those documents.** That is the delivery skills' job, and the whole point of
-the pipeline. What this step produces is a **documentation task per affected document**, placed at
-the front of the breakdown by the rule `interview.md` already carries — documentation-only tasks
-first, each its own item.
+the pipeline. What this step produces is a **documentation task per affected document**, each its
+own item, placed by the rule `interview.md` already carries: **after the functional work it
+describes, blocking nothing.** A page is rewritten to match what was built, so it cannot be built
+first — and a code task marked blocked by a documentation task stalls the delivery on prose.
 
 ### The inventory (Phase 1)
 
@@ -96,6 +97,12 @@ four documentation tasks bolted onto a two-task change is a real widening of sco
 does not get to make it. Whatever the user excludes goes in the report's **Out of scope** section,
 named — a document known to be going stale and deliberately left alone is a decision worth being
 able to find later.
+
+**Confirmed is not promoted.** A document the user keeps becomes one ordinary task after the
+functional work, never a prerequisite of it and never a blocker of anything. The single exception
+is a document the code is written *against* — a contract or schema declaration, an ADR recording
+the decision a task implements — and it has to name the functional task that cannot start without
+it.
 
 ADRs are the one asymmetric case: a superseded decision is **never** edited. The task is "write a
 new ADR that supersedes `ADR-00N`", and it says so.

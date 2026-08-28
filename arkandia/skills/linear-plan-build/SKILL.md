@@ -48,6 +48,11 @@ background. This file supplies the Linear bindings it asks for.
   schema migration is how you lose them.
 - **Autonomy ends at the PR.** Push it, open it, babysit it to green — never merge, never enable
   auto-complete, never deploy.
+- **A silent run is a run nobody trusts.** Say which step you are on, what you just changed, and
+  what you are waiting for — in plain sentences the person who wrote the ticket can follow, not in
+  raw tool output. See § *Say what you are doing* in `references/build-loop.md`.
+- **A finished subissue is marked finished.** Each child that is implemented, gated and pushed
+  moves to the team's completed state as it closes. The **parent** is what waits on the PR.
 - **Keep the tracker footprint minimal.** Status and comments on the issue you are building, and
   nothing else in Linear, ever.
 
@@ -125,11 +130,13 @@ Run these in parallel:
 5. `list_cycles` for the team with `type: "current"` — what else is in flight.
 
 **Resolve the team's real workflow states with `list_issue_statuses` before any status
-write.** "In Progress" and "In Review" are conventions, not guarantees — teams rename
-and reorder them. Match by state *type* (`started` for in-progress, `completed`'s
-predecessor / the team's review state for in-review), and say which state you picked.
-If nothing plausibly matches, pick the closest by type, name it, and continue — a
-status write is never worth blocking the work.
+write.** "In Progress", "In Review" and "Done" are conventions, not guarantees — teams
+rename and reorder them. Resolve **three** states by *type*, not by name: the
+`started` one for in-progress, the team's review state (typically the last `started`
+or `unstarted` state before completion) for in-review, and the `completed` one that
+subissues land in when they close. Say which state you picked for each. If nothing
+plausibly matches, pick the closest by type, name it, and continue — a status write is
+never worth blocking the work.
 
 ## Phase 2 — Prepare the git environment
 
@@ -164,7 +171,8 @@ Follow `references/build-loop.md`, Steps A → J, with these bindings.
 | `TICKET` | the Linear issue — the parent |
 | `SUB-TICKETS` | its subissues — `list_issues` with `parentId` to list, `save_comment` / `save_issue` against the child's id |
 | `STATUS→IN-PROGRESS` | `save_issue` with the team's `started`-type state (Phase 1) |
-| `STATUS→IN-REVIEW` | `save_issue` with the team's review state (Phase 1) |
+| `STATUS→IN-REVIEW` | `save_issue` with the team's review state (Phase 1) — used on the **parent**, which waits on the PR |
+| `STATUS→DONE` | `save_issue` with the team's `completed`-type state (Phase 1) — used on a **subissue** once it is implemented, gated and pushed |
 | `COMMENT` | `save_comment` on the issue |
 | `BRANCH` | the Phase 2 branch |
 | `LINK-TOKEN` | the issue key (`ABC-123`) — this is what Linear's GitHub integration matches on. Each Step F.6 commit carries **the sub-issue's own key**; the PR title carries the parent's |
@@ -206,7 +214,8 @@ the review-comment half of Step I; an absent CI is not a green CI.
 | Neither `mcp__linear__*` nor `mcp__linear-server__*` is exposed | The Linear MCP server is not registered, or the workspace is not trusted so a project-scoped server never loaded | `/mcp`. A pending-approval server behaves exactly like an absent one |
 | `gh` fails to authenticate at Step H, after the whole build | Phase 0b was skipped | `gh auth status` before Phase 1 — that is what 0b is for. Recover with `gh auth login` and resume from Step H; the branch and commits survive |
 | `gh pr checks --watch` returns instantly with no checks | Either the repo has no CI, or the first run has not registered yet on a just-pushed branch | `gh run list --branch <branch>`. If there genuinely is no CI, say so and skip to the review-comment half of Step I — an absent CI is **not** a green CI, and Step J must name it as a skipped gate |
-| The status write lands in the wrong column | The state was matched by name. Teams rename and reorder states, so "In Progress" is a convention, not a guarantee | `list_issue_statuses` and match by state *type* (`started`, the team's review state). Name the state you picked |
+| The status write lands in the wrong column | The state was matched by name. Teams rename and reorder states, so "In Progress" is a convention, not a guarantee | `list_issue_statuses` and match by state *type* (`started`, the team's review state, `completed`). Name the state you picked |
+| Subissues sit in progress after their work shipped | Step F.6.4 was skipped, or the `completed` state was never resolved in Phase 1 | Each child closes into `STATUS→DONE` as Step F.6 finishes it; only the parent stays in review, waiting on the PR |
 | Linear never links the commit or the PR to the issue | `LINK-TOKEN` — the issue key — is missing from the branch name, the commit message, or the PR title | The key must appear in all three; Linear's GitHub integration matches on it |
 | Phase 2 stops on a dirty working tree | By design. Stashing someone's uncommitted work is not this skill's call | `git status`. Commit or stash it yourself, then re-run |
 | Two subagents overwrite each other's edits in Step F | Steps that converge on the same file were dispatched in parallel | Step F.2: converging steps stay **serial** in one agent. Parallelize the thinking (subagents return diffs, you apply them), not the writes |

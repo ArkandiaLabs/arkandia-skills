@@ -56,11 +56,14 @@ estos consumen: por contrato, estos dos nunca crean subissues. Construyen los qu
    más de ~3 pasos o ~3 archivos, o que toque un contrato, un esquema, autenticación o dinero, o
    que descanse en supuestos, o que sea difícil de revertir. Los cambios pequeños, reversibles y
    completamente especificados imprimen el plan y siguen.
-9. **Implementar, tests primero — un subissue a la vez.** RED → GREEN por paso, paralelizando solo
-   donde las ediciones no chocan. Al cerrar cada subissue: pone en el índice solo sus archivos,
-   commitea con el token de enlace **de ese subissue**, hace push, y luego lo comenta y lo mueve al
-   estado de revisión de tu equipo. Nunca marca un subissue como terminado — nada está mergeado
-   todavía, y esa decisión es de quien revise el PR.
+9. **Implementar, tests primero — un subissue a la vez.** RED → GREEN por paso, con la edición
+   delegada a subagentes que reportan qué cambiaron, para que la sesión principal conserve su
+   contexto para el plan, los gates y para ti. Paraleliza solo donde las ediciones no chocan; los
+   comentarios en el código siguen la densidad y el idioma que ya usa tu repo, no las costumbres
+   del agente. Al cerrar cada subissue: pone en el índice solo sus archivos, commitea con el token
+   de enlace **de ese subissue**, hace push, lo comenta y **lo mueve al estado de terminado de tu
+   equipo** — un hijo implementado, con sus gates en verde y con push hecho está terminado como
+   unidad de trabajo. El **padre** es el que queda esperando el PR.
 10. **Gates** — una sola vez, sobre el diff completo de la rama. Resuelve los comandos de gate
     propios de tu repo (una sección Gates/Commands en `CLAUDE.md`/`AGENTS.md` → detección por
     manifiesto → preguntar), luego `/code-review`, más `/security-review` cuando el diff toca
@@ -73,9 +76,15 @@ estos consumen: por contrato, estos dos nunca crean subissues. Construyen los qu
 12. **Cuidar el PR hasta el verde** — vigilar CI, reintentar una vez un job flaky, arreglar en la
     fuente los fallos reales, y luego atender comentarios de revisión en bucle hasta que el PR esté
     verde y limpio. Se detiene tras tres intentos fallidos sobre el mismo job.
-13. **Cerrar** — publicar el resumen en el ticket padre y moverlo a su estado de revisión,
-    preguntar qué hacer con el archivo de plan (borrarlo, dejarlo, o moverlo a tu documentación), y
-    reportar qué subissues se construyeron y cuáles quedaron fuera de la ejecución.
+13. **Cerrar** — publicar el resumen en el ticket padre y moverlo a su estado de revisión, donde
+    se queda hasta que alguien mergee el PR; preguntar qué hacer con el archivo de plan (borrarlo,
+    dejarlo, o moverlo a tu documentación); y reportar qué subissues se construyeron y cuáles
+    quedaron fuera de la ejecución.
+
+Durante toda la ejecución se narra a sí mismo en lenguaje sencillo: una línea al abrir y otra al
+cerrar cada paso, y cada cambio de estado anunciado cuando ocurre — la rama, cada estado escrito en
+el tracker y cuál eligió, cada commit y push, la URL del PR, y la corrida de CI que está
+esperando.
 
 ## Prerrequisitos
 

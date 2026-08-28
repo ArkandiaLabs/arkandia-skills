@@ -20,12 +20,16 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   API list, runbooks, ADRs, `AGENTS.md` — by grepping the doc set for the concrete names the
   requirement touches and listing a document only when it can quote the line that goes false, then
   asks which of them belong in this pass and turns each confirmed one into its own documentation
-  task naming the file, what is now wrong, and what should replace it. It never edits those
-  documents itself. Sweeps the document for ambiguity across six categories, in batches of at most
+  task naming the file, what is now wrong, and what should replace it — placed **after** the
+  functional work it describes and blocking nothing, since a page is rewritten to match what was
+  built. It never edits those documents itself. Sweeps the document for ambiguity across seven categories, in batches of at most
   four jargon-free questions, and always asks where to save the result — the trackers actually
   detected (Linear, Azure DevOps) plus a local file, never auto-picked even with exactly one
-  tracker found. Derives an ordered task breakdown from the closed decisions, documentation-only
-  tasks first, and rereads what it wrote — the parent-child relation, the initial status, or the
+  tracker found. Every validation criterion it surfaces — the rule the business will check the
+  result against, usually written as background — gets asked about rather than assumed: whether it
+  becomes its own item in the breakdown, and only then whether the rest of the work waits for it.
+  Derives an ordered task breakdown from the closed decisions — functional work first, dependencies
+  written out rather than implied by order — and rereads what it wrote — the parent-child relation, the initial status, or the
   file links — before reporting success. Never writes code, never opens a PR, never commits. The
   asymmetry it leaves: `linear-plan-build`/`ado-plan-build` have no file-mode entry point today, so
   a run that lands in file mode does not chain automatically into them.
@@ -36,14 +40,30 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   opens by asking which children this run covers — all of them by default, and whatever is left
   out is named in the final report rather than quietly dropped. Each selected subissue is then
   implemented, committed and pushed on its own, carrying **its own** link token so the tracker
-  attaches the commit to the child and not just to the parent, and is commented and moved to the
-  team's review state as it closes. It never marks a subissue done: nothing is merged yet, and
-  that call belongs to whoever reviews the PR. The full gate set, `/code-review` and
+  attaches the commit to the child and not just to the parent, and is commented and **moved to the
+  team's completed state** as it closes — a child that is implemented, gated and pushed is finished
+  as a unit of work, and leaving it in progress makes the board claim there is work left that
+  nobody is doing. The **parent** is the one that waits: it goes to the review state at Step J and
+  stays there until someone merges the PR. The full gate set, `/code-review` and
   `/security-review` run **once** over the complete branch diff, and one PR is opened for the
   whole ticket. If anything on the work list was not implemented — blocked, escalated, abandoned
   — there is no PR at all: the run reports what is missing and leaves the branch pushed so nothing
   built is lost. Both skills keep one branch and one PR per ticket, so no worktree isolation is
   involved.
+- **The run narrates itself in plain language.** The build loop gained a standing rule: one line
+  when a step opens and one when it closes, every state change announced as it happens — the
+  branch, each tracker status and which state was picked, each commit and push, the PR URL, the CI
+  run being waited on — written for the person who filed the ticket rather than for the diff
+  reviewer, and never printed ahead of the fact. A long autonomous run whose only output is tool
+  noise is a run nobody can follow.
+- **Implementation is delegated by default; the main session orchestrates.** Step F now hands the
+  editing to subagents that report what they changed instead of returning file contents, keeping
+  the orchestrator's context for the plan, the gates, the pushes and the user. Steps that must run
+  in order still do — in one subagent, rather than in the main session.
+- **Comments follow the repo, not the agent.** Step F carries an explicit restraint: match the
+  surrounding comment density (usually none), write one only where a reader would otherwise ask
+  *why*, never narrate your own change, apply the same rule to config and project files, and write
+  them in the language the repo's code already uses.
 - **The plan is now a file.** Step C writes `.claude/plans/<TICKET>.md` and keeps it current while
   the work runs — the work list with each item's state, the Decisions, the Assumptions and the
   test verdicts. It is a working notebook, not the archive: it survives a session that dies or

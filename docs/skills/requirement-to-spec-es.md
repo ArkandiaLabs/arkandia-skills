@@ -37,28 +37,35 @@ avisar — y convierte las respuestas ya cerradas en algo listo para construir.
    del modelo de datos, la lista de endpoints, el runbook, el ADR que este cambio supera,
    `AGENTS.md`. No por categoría: el skill busca en tu set de documentos los nombres concretos que
    el requerimiento toca, y solo lista un documento cuando puede citar la línea que queda obsoleta.
-   Cada uno que confirmes se vuelve su propia tarea documental al inicio del desglose, nombrando el
-   archivo, qué quedó falso y qué debería decir en su lugar; cada uno que excluyas queda registrado
-   por nombre como fuera de alcance. El skill nunca edita esos documentos — eso es lo que hacen los
+   Cada uno que confirmes se vuelve su propia tarea documental **después** del trabajo funcional
+   que describe — sin bloquear nada, porque una página se reescribe para reflejar lo que se
+   construyó — nombrando el archivo, qué quedó falso y qué debería decir en su lugar; cada uno que
+   excluyas queda registrado por nombre como fuera de alcance. El skill nunca edita esos documentos — eso es lo que hacen los
    skills de entrega con la tarea.
 4. **Cruzar datos**, si hay un MCP de base de datos conectado — detectado por la forma de sus
    herramientas, no por un nombre fijo — comparando un adjunto tabular contra los números reales y
    reportando cualquier discrepancia con las cifras exactas de ambos lados.
 5. **Barrer ambigüedades** — alcance implícito, contradicciones entre texto y adjuntos, vacíos de
    comportamiento, cifras que no cuadran, alcance que se cuela al final del documento en tono
-   casual, moneda o unidad no declarada. Preguntadas en tandas de máximo cuatro, en lenguaje llano,
+   casual, moneda o unidad no declarada, criterios de validación escritos como contexto. Preguntadas en tandas de máximo cuatro, en lenguaje llano,
    con la opción recomendada primero. El alcance colado son dos preguntas, no una: ¿entra en este
    cambio?, y — si no — ¿se anota en la spec o se vuelve su propio item del desglose? Sin default
    fijo; se decide cada vez — y la segunda pregunta se formula en términos del desglose, no del
-   gestor, porque dónde se archiva el resultado no se decide hasta el paso 6.
+   gestor, porque dónde se archiva el resultado no se decide hasta el paso 6. Un **criterio de
+   validación** — la regla con la que tu negocio va a revisar lo entregado, casi siempre escrita
+   como contexto — recibe el mismo trato de dos preguntas: ¿se vuelve su propio item?, y solo
+   entonces ¿el resto del trabajo espera por él? El skill nunca convierte uno en bloqueante sin que
+   lo hayas pedido.
 6. **Preguntar dónde guardar** — siempre, incluso con un solo gestor detectado, nunca auto-elegido:
    los gestores realmente encontrados (Linear, Azure DevOps) más **Archivo local**, en ese orden.
    Sin ningún gestor conectado la pregunta igual se hace, con "parar aquí y cablear uno primero"
    como alternativa real; si la rechazas, no se escribe nada.
-7. **Derivar el desglose de tareas** a partir de las decisiones cerradas — las tareas puramente
-   documentales (declarar un contrato, escribir un ADR, actualizar cada documento obsoleto del
-   paso 3) van primero como su propio item, las tareas funcionales que dependen de ellas van
-   después, con la dependencia declarada explícitamente.
+7. **Derivar el desglose de tareas** a partir de las decisiones cerradas — las tareas funcionales
+   primero, cada documento obsoleto del paso 3 como su propio item después del trabajo que
+   describe, y las dependencias escritas en vez de insinuadas por el orden. Solo va primero un
+   documento contra el que el código se escribe literalmente (declarar un contrato o un esquema, un
+   ADR que registra la decisión que una tarea implementa), y en ese caso la tarea dice cuál tarea
+   funcional lo necesitaba. Los bloqueantes existen solo donde tú lo dijiste.
 8. **Escribirlo** — un issue/work item padre más hijos enlazados en modo gestor, resolviendo el
    estado inicial por categoría en vez de por un nombre fijo; o `docs/specs/<slug>/spec.md` +
    `docs/specs/<slug>/tasks.md` en modo archivo.

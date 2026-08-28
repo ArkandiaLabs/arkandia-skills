@@ -53,11 +53,13 @@ They build the ones you hand them — and ask which of them a given run should c
    or ~3 files, or that touches a contract, a schema, auth, or money, or that rests on
    assumptions, or that is hard to reverse. Small, reversible, fully-specified changes print the
    plan and keep going.
-9. **Implement, test-first — one subissue at a time.** RED → GREEN per step, fanning out only
-   where edits don't collide. As each subissue closes: stage only its files, commit with **that
-   subissue's** link token, push, then comment on it and move it to your team's review state. It
-   never marks a subissue done — nothing is merged yet, and that call belongs to whoever reviews
-   the PR.
+9. **Implement, test-first — one subissue at a time.** RED → GREEN per step, with the editing
+   delegated to subagents that report what they changed, so the main session keeps its context for
+   the plan, the gates and you. Fan-out only where edits don't collide; comments follow your repo's
+   own density and language rather than the agent's habits. As each subissue closes: stage only its
+   files, commit with **that subissue's** link token, push, then comment on it and **move it to
+   your team's completed state** — a child that is implemented, gated and pushed is finished. The
+   **parent** is what waits on the PR.
 10. **Gates** — once, over the complete branch diff. It resolves your repo's own gate commands (a
     Gates/Commands section in `CLAUDE.md`/`AGENTS.md` → manifest detection → ask), then
     `/code-review`, plus `/security-review` when the diff touches auth, secrets, or input parsing.
@@ -70,9 +72,13 @@ They build the ones you hand them — and ask which of them a given run should c
 12. **Babysit the PR to green** — watch CI, rerun a flaky job once, fix real failures at the
     source, then address review comments in a loop until the PR is green and clean. It stops after
     three failed attempts on the same job.
-13. **Wrap up** — post the summary on the parent ticket and move it to its review state, ask what
-    to do with the plan file (delete, keep, or move it into your docs), and report which subissues
-    were built and which were left out of the run.
+13. **Wrap up** — post the summary on the parent ticket and move it to its review state, where it
+    stays until someone merges the PR; ask what to do with the plan file (delete, keep, or move it
+    into your docs); and report which subissues were built and which were left out of the run.
+
+Throughout, it narrates itself in plain language: one line as each step opens and closes, and
+every state change announced as it happens — the branch, each tracker status and which state it
+picked, each commit and push, the PR URL, the CI run it is waiting on.
 
 ## Prerequisites
 

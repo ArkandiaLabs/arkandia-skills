@@ -15,6 +15,7 @@ whatever tracker the ticket came from.
 | `SUB-TICKETS` | the child items of `TICKET`, if it has any — how to list them, comment on one, and set one's status |
 | `STATUS→IN-PROGRESS` | how to move `TICKET` to its in-progress state |
 | `STATUS→IN-REVIEW` | how to move `TICKET` to its in-review state |
+| `STATUS→DONE` | how to move a **sub-ticket** to its completed state |
 | `COMMENT` | how to post a comment on `TICKET` |
 | `BRANCH` | the feature branch name |
 | `LINK-TOKEN` | the string that makes the tracker attach a commit to `TICKET` |
@@ -27,6 +28,25 @@ Run steps A → J in order. Only Step E pauses for the user; everything else is
 things that stop you.
 
 ---
+
+## Standing rule — say what you are doing, in plain language
+
+This run is long and mostly unattended. Between Step A and Step J the only window the
+user has into it is what you print, so print deliberately rather than leaving them to
+infer progress from tool output.
+
+- **One line when a step starts, one when it closes** — which step, which item of the
+  work list, and the result. `Step F · ABC-124 "Export endpoint" · 3 of 5 · tests
+  green` is worth more than either silence or a wall of raw output.
+- **Announce every change the user would otherwise find out about later** — the branch
+  created, each tracker status written (and which state you picked), each commit and
+  push, the PR URL, the CI run you are waiting on and roughly how long it takes.
+- **Write for the person who wrote the ticket, not for the person who will review the
+  diff.** Plain sentences, no unexplained jargon: "rerunning the failing test job once
+  in case it was flaky" beats "rerun --failed on job 42". Same rule for tracker
+  comments and the PR body.
+- **Never announce work you have not done.** A line printed ahead of the fact is a
+  plan, not a report — say what happened, after it happened.
 
 ## Step A — Grill the user
 
@@ -221,7 +241,15 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
    `in_progress` / `completed` as you go. State lives in the task list and the plan
    file, not in memory.
 
-2. **Partition the steps by the files they touch.** This decides what can fan out, and
+2. **Delegate the writing; keep the judgment.** The main session is the orchestrator —
+   it holds the plan, runs the gates and talks to the user — and every file it reads in
+   full is context it will not have later in the run. So the default is that a subagent
+   does the editing and reports back what it changed, not the file contents. Serial
+   does **not** mean "in the main session": steps that must run in order can go to a
+   single subagent that runs them in order. Keep in the main session only what needs
+   it — the gates (Step G), the pushes, the tracker writes and the user-facing lines.
+
+   **Partition the steps by the files they touch.** This decides what can fan out, and
    it is the whole judgment call:
 
    - Steps whose file sets are **disjoint** (a new validator in one module, an
@@ -250,6 +278,16 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
    repo's own file-size and module-splitting conventions if it has any; do not impose
    a limit it never asked for.
 
+   **Comment the way this repo already comments.** Match the surrounding density,
+   which usually means writing none: a comment earns its place when a reader would
+   otherwise ask *why* — a workaround, a constraint from outside the code, a rule that
+   looks wrong until you know the reason — never to restate what the line says, and
+   never as narration of your own change ("added validation here"). The same restraint
+   applies to config, YAML and project files: comment the value that would surprise
+   someone, not every key. **Write comments in the language the repo's code already
+   uses** — English unless the surrounding code says otherwise, whatever language this
+   conversation is in.
+
 5. On **3 consecutive failures of the same check**, stop iterating blindly. Classify
    the cause — test, code, environment, or plan drift — fix it at the source, and
    resume. If you can't confidently classify it, that's an escalation.
@@ -265,9 +303,12 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
    3. Push `BRANCH`. Everything lands on the same branch — **one branch for the whole
       `TICKET`**, and one PR at the end.
    4. `COMMENT` on the sub-ticket with what changed and the checks that verified it,
-      then set its `STATUS→IN-REVIEW` (both pre-authorized). **Never mark a sub-ticket
-      done or completed** — nothing is merged yet, and that call belongs to whoever
-      reviews the PR.
+      then set its `STATUS→DONE` (both pre-authorized). A child that is implemented,
+      gated, committed and pushed is finished as a unit of work; leaving it in progress
+      makes the board claim there is work left that nobody is doing. **The parent is
+      the one that waits** — it moves to `STATUS→IN-REVIEW` at Step J and stays there
+      until someone merges the PR, which is never you. A child you had to abandon or
+      escalate is the exception: leave it in progress and say so.
    5. Update the plan file, then start the next item.
 
    A mid-branch push is a **checkpoint, not a delivery**: the targeted checks of F.3 are
@@ -356,8 +397,9 @@ for a product judgment nobody has answered is an escalation, not a code change.
 ## Step J — Wrap up
 
 1. Post the summary via `COMMENT` on `TICKET` — the parent — and set its
-   `STATUS→IN-REVIEW` (both pre-authorized — never ask). The sub-tickets were already
-   commented and moved as each one closed, in Step F.6. The summary must reflect the
+   `STATUS→IN-REVIEW` (both pre-authorized — never ask). The parent is what waits on
+   the PR; the sub-tickets were already commented and moved to their completed state
+   as each one closed, in Step F.6. The summary must reflect the
    **final** state: the PR URL, that CI is green, and that review comments were
    addressed.
 2. **Ask what to do with `.claude/plans/<TICKET>.md`** — one `AskUserQuestion`, three

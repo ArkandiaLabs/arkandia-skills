@@ -52,6 +52,11 @@ background. This file supplies the Azure DevOps bindings it asks for.
   schema migration is how you lose them.
 - **Autonomy ends at the PR.** Push it, open it, babysit it to green — never complete it, never
   set auto-complete, never bypass a branch policy, never deploy.
+- **A silent run is a run nobody trusts.** Say which step you are on, what you just changed, and
+  what you are waiting for — in plain sentences the person who wrote the work item can follow, not
+  in raw tool output. See § *Say what you are doing* in `references/build-loop.md`.
+- **A finished child item is marked finished.** Each child that is implemented, gated and pushed
+  moves to the process's completed state as it closes. The **parent** is what waits on the PR.
 - **Keep the tracker footprint minimal.** State and discussion on the work item you are building,
   and nothing else in Boards, ever.
 
@@ -151,7 +156,8 @@ per access path are in `references/ado-access.md`.
 | `TICKET` | the work item — the parent |
 | `SUB-TICKETS` | its child work items — the same comment and state operations, against the child's id |
 | `STATUS→IN-PROGRESS` | set the item's in-progress state — see **States** below |
-| `STATUS→IN-REVIEW` | set the item's review state — see **States** below |
+| `STATUS→IN-REVIEW` | set the item's review state — see **States** below — used on the **parent**, which waits on the PR |
+| `STATUS→DONE` | set a **child** item's completed state — see **States** below — once it is implemented, gated and pushed |
 | `COMMENT` | add to the item's discussion |
 | `BRANCH` | the Phase 2 branch |
 | `LINK-TOKEN` | **`AB#<id>`** — that exact syntax is what makes Boards attach the commit; a bare `#2` does nothing. Each Step F.6 commit carries **the child item's own id**; the PR is opened with the parent's |
@@ -162,9 +168,9 @@ per access path are in `references/ado-access.md`.
 **States are per-process, so read them, don't assume.** Basic uses
 `To Do` / `Doing` / `Done`; Agile uses `New` / `Active` / `Resolved` / `Closed`; Scrum
 uses `New` / `Approved` / `Committed` / `Done`. Read the item's current
-`System.State` and its type, pick the state that actually means in-progress or in
-review for that process, and name the one you picked. A state write is never worth
-blocking the work over — if nothing fits, say so and carry on.
+`System.State` and its type, pick the state that actually means in-progress, in review
+or **completed** for that process, and name the one you picked for each. A state write
+is never worth blocking the work over — if nothing fits, say so and carry on.
 
 **Branch policies matter here.** An Azure Repos PR often can't complete without CI
 green plus a reviewer approval. That's the point: this skill drives CI to green and
@@ -208,7 +214,8 @@ addresses the review comments, then leaves the completion to a human.
 | `az` calls fail with an auth error | The login expired, or the `azure-devops` extension is missing | `az account show`, `az extension list`. Full auth troubleshooting for both paths is in `ado-access.md` |
 | The work item has no acceptance criteria | The **Basic** process `Issue` type does not define `Microsoft.VSTS.Common.AcceptanceCriteria` at all — only Agile/Scrum types do | Read `System.WorkItemType` first, and ask for the field only when the type defines it. Its absence is never an empty requirement |
 | Tags leak into the plan, or the description reads as markup | `System.Description` and the acceptance criteria come back as **HTML**, not Markdown | Render to text before reasoning over them |
-| The state write lands in the wrong column | The state was matched by name against the wrong process — Basic, Agile and Scrum use different sets | Read the item's current `System.State` and its type, pick the state that means in-progress or in-review **for that process**, and name the one you picked |
+| The state write lands in the wrong column | The state was matched by name against the wrong process — Basic, Agile and Scrum use different sets | Read the item's current `System.State` and its type, pick the state that means in-progress, in-review or completed **for that process**, and name the one you picked |
+| Child work items sit active after their work shipped | Step F.6.4 was skipped, or the process's completed state was never resolved | Each child closes into `STATUS→DONE` as Step F.6 finishes it; only the parent stays in review, waiting on the PR |
 | Boards never links the commit or the PR to the item | `LINK-TOKEN` is wrong. Only **`AB#<id>`** works — a bare `#2` does nothing | The exact `AB#<id>` string in the commit message, plus `--work-items <id>` on the PR |
 | The PR cannot be completed even on green | A branch policy requires a reviewer approval as well | Expected, not a bug. This skill drives CI to green and answers the comments; completing it is a human's call |
 | No pipeline run appears for the branch | Either the repo has no pipeline, or none is triggered by this branch | `az pipelines runs list --branch <branch>`. If there genuinely is no CI, say so and skip to the review-comment half of Step I — an absent pipeline is **not** a green pipeline, and Step J must name it as a skipped gate |
