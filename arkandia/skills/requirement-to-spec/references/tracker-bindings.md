@@ -160,6 +160,34 @@ On the MCP path, list the server's real tools before calling anything beyond wha
 `ado-access.md` already attests (`wit_get_work_item`, `wit_list_work_item_comments`) — neither of
 those creates or links anything.
 
+### MCP path: creating and linking, end to end
+
+The binding table promises `CREATE-PARENT` and `CREATE-CHILD`. On the CLI path the calls above
+deliver them. On the MCP path nothing is attested past the two readers, so **resolve the whole
+path before the destination prompt commits the user to it** — a run that offers Azure DevOps and
+then cannot write has already spent the entire interview.
+
+1. **List the server's real tools.** Match **by shape**, never by a name from this page:
+   - creation — takes a project, a work-item type and field values (`wit_create_work_item`-like);
+   - update — takes an id and field values (`wit_update_work_item`-like);
+   - linking — either a dedicated child/parent call (`wit_add_child_work_items`-like) or a generic
+     relation call taking a link type plus two ids (`wit_work_items_link`-like).
+2. **Report which tool answered for each of the three**, in the Phase 2 table. This is new ground;
+   the next maintainer should not have to rediscover the spelling.
+3. **A shape with no match is a question, not a guess.** If creation is missing, Azure DevOps is
+   not a viable destination on this path — say so *in the destination prompt*, so the user picks
+   Linear or the local file with that fact in hand, rather than discovering it after Phase 3. If
+   only *linking* is missing, offer the fallback explicitly: create the items unlinked and report
+   the parent relation as not established, naming each child. Never create children whose parent
+   link silently never happened.
+4. **Set the parent at creation if the creation tool accepts it** (a `parent`/`parentId` argument,
+   or a `System.Parent` field in its value map) — one call cannot half-succeed the way create-then-
+   link can. Fall back to the linking tool only when it does not.
+5. **Verify in Phase 5 by reading the child back** with the attested `wit_get_work_item` and
+   confirming the parent relation resolves to the id you set. A creation call that returned success
+   is a claim; the read-back is the evidence, and it is the one check that costs nothing because
+   the tool for it is already attested.
+
 ## Azure DevOps: Basic process has no acceptance-criteria field
 
 If the resolved process is Basic, the full spec text goes into `System.Description` — same as

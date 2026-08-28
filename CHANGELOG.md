@@ -170,6 +170,37 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   a guess at the spelling, marked as one, since a name the server does not expose costs nothing and
   one it spells differently costs a single prompt.
 
+- **Review de PR: doce hallazgos más, en los tres skills y en la documentación.**
+  `plan-build` (ado + linear): "All of them" ya no reabre hijos en estado terminal — se listan
+  con su estado para que el usuario pueda elegirlos a propósito, pero fuera del default — y un hijo
+  cuya dependencia no está seleccionada ni completa se pregunta antes de construir, en vez de
+  fallar tarde en Step G sobre un diff que nunca fue coherente. El plan file se actualiza *dentro*
+  del ítem, no solo al cerrarlo, para que una sesión interrumpida no pierda todo desde el último
+  cierre. Step J reporta "CI verde" **solo si hay CI y pasó**; un repo sin pipeline se reporta como
+  "sin CI configurado", nunca en silencio ni en verde. El troubleshooting de ambos skills decía que
+  una misma clave debía aparecer en branch, commit y PR — imposible desde que cada commit lleva la
+  clave de su propio sub-ticket; ahora dice qué clave va en cada sitio. Y la allowlist de Bash se
+  estrechó a los subcomandos que la corrida usa (`gh api` queda acotado a la ruta de comentarios
+  inline; los gestores de paquetes ya no pueden publicar), con nota explícita de los dos comodines
+  que quedan a propósito — `git add`/`git push` y `npx` — y de que un límite duro se pone con
+  `permissions.deny`, no con una allowlist.
+
+  `requirement-to-spec`: el nombre del archivo temporal lleva un id de corrida de seis caracteres —
+  la ruta era función pura del documento, así que dos corridas simultáneas se pisaban el Markdown y
+  una podía leer lo que convirtió la otra, algo que Phase 5 no detecta porque verifica existencia y
+  enlaces, no identidad del contenido. La conversión con `npx` va acotada por un timeout explícito
+  del tool Bash: sin red `npx` no falla, se cuelga resolviendo el registry, y la cadena que espera
+  su código de salida nunca llegaba al modo degradado — justo cuando hace falta. La regla de
+  adjunto ausente es ahora una sola en los tres archivos: se reporta, no se pregunta; lo que sí
+  puede volverse pregunta es el vacío de alcance. Y la ruta MCP de Azure DevOps queda definida de
+  punta a punta — descubrir por forma las tres operaciones, reportar cuál respondió, tratar una
+  forma sin match como pregunta *antes* del prompt de destino, poner el padre en la creación cuando
+  la tool lo acepta, y verificar leyendo el hijo de vuelta.
+
+  Documentación: `external I/O` documentado como condición de `/security-review`; "el modo archivo
+  siempre funciona" matizado a lo que de verdad garantiza; y los ejemplos de las cuatro skills
+  agnósticas de stack salieron del bloque "dentro de cualquier repositorio .NET" en ambos README.
+
 ## [0.4.0] — 2026-08-25
 
 ### Added

@@ -28,8 +28,16 @@ scanned or image-only PDF is a documented, expected `1`, not a bug to route arou
 Every converted file goes to the **OS temp directory**, never the target repo's working tree:
 
 ```
-${TMPDIR:-/tmp}/requirement-to-spec-<slug>-<source-filename>.md
+${TMPDIR:-/tmp}/requirement-to-spec-<run-id>-<slug>-<source-filename>.md
 ```
+
+`<run-id>` is **six random lowercase alphanumerics, chosen once at Phase 1 and reused for every
+file this run writes**. Without it the path is a pure function of the document, so two runs against
+the same document — a colleague's, or your own retry in another session — write the same file:
+one overwrites the other mid-conversion, and the loser reads a document it did not convert. Nothing
+downstream would catch it, because Phase 5 verifies that the file exists and that its links
+resolve, never that its content is the one this run produced. Print the `<run-id>` in the Phase 1
+report so a file named in an error can be traced back to the run that made it.
 
 A flat name, not a subdirectory — this skill has no `mkdir` grant, and `-o` should not be the thing
 that has to create a path. The main document and every attachment each produce one such file. Two
@@ -42,6 +50,15 @@ own — do not delete anything mid-run, the report may still need to name the fi
 
 1. **`npx -y @firecrawl/anydoc@0.2.3 <file> -o <tmp>.md`** (the temp path above) — capture the exit
    code, then **`Read` the output file**. On success, that file is the document going forward.
+
+   **Bound this call.** Pass an explicit `timeout` on the Bash tool call — 180000 ms is generous
+   for a first run that has to fetch the package — instead of letting it use the default. `npx`
+   with no network does not fail fast: it hangs resolving the registry, and a chain that waits for
+   an exit code that never comes never reaches step 2, so the whole degraded-mode fallback below is
+   unreachable exactly when it is needed. A timeout is not an error to report as a crash: treat it
+   like exit `1` and fall through, noting in the report that the conversion timed out rather than
+   failed. Do not reach for a `timeout` command instead — it is not present by default on macOS,
+   and the Bash tool's own bound is portable.
 2. **Exit `1`, or an output file that is empty/near-empty** (whitespace, or headings with no body —
    a scanned PDF anydoc technically "succeeded" on but extracted nothing readable) → fall back as
    below. The trigger is the **output file**, never stdout: step 1 redirects the conversion with
@@ -73,8 +90,14 @@ the document itself. For each one:
 2. **Found** → run it through the same conversion chain above.
 3. **Missing** → list it in the Phase 1 report as missing, **without describing what it would
    probably contain**. This is the single highest-cost failure in the whole skill: inventing the
-   content of an attachment nobody could open produces a spec that looks complete and is not. Report
-   the fact; let the interview phase turn it into a question if the missing content changes scope.
+   content of an attachment nobody could open produces a spec that looks complete and is not.
+
+   **The absence is a fact to report, never a question** — the same rule `SKILL.md` and
+   `references/interview.md` state, and it is one rule, not three. You already know the file is
+   missing; asking the user to confirm it wastes one of the four questions in a batch. What *can*
+   become a question is the **scope gap** it leaves, and only when there is one: it is swept like
+   any other ambiguity, phrased about the decision that is now unanswerable, never about whether
+   the file arrived.
 
 ## Prerequisite (checked in Phase 1, reported in Phase 2)
 

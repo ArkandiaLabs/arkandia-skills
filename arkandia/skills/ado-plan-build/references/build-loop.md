@@ -62,6 +62,20 @@ dependencies; the ones left out are named in the Step J report so nobody assumes
 shipped. If `TICKET` has no children, the work list is the ticket itself. Do this before
 the design questions — what is worth asking depends on what you are actually building.
 
+**Two things are settled before that question is asked, not after:**
+
+- **A child already in a terminal state is not work.** Read each child's status, and
+  leave the ones already completed (or cancelled/duplicate/won't-do) **out of "All of
+  them"** — list them in the question as context, marked with their state, so the user
+  can still select one deliberately to redo it. "All of them" that silently reopens
+  finished work is a destructive default.
+- **A selected child whose dependency is neither selected nor already complete is a
+  question, not a plan.** Dependencies come from the tracker's own relations plus what
+  the ticket text says; where a child cannot start until another lands, say so and ask
+  before continuing — add the missing dependency to the run, or confirm it is already
+  done elsewhere. Never build a child on top of work that is not there: the gates fail
+  late, at Step G, on a diff that was never coherent.
+
 **Ask only what nobody has answered yet.** Read `TICKET`, its comments, its parent and
 subissues, and the repo's `AGENTS.md` / `CLAUDE.md` / `docs/` pack **first**. A
 question whose answer is already written down is noise, and it teaches the user that
@@ -317,6 +331,12 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
       which is the one thing a tracker must never show.
    5. Update the plan file, then start the next item.
 
+   **Keep the plan file current *inside* the item too, not only when it closes.** Tick
+   each step as its targeted checks pass, and record a decision or a deviation when it
+   happens. An item can take many turns and a session can be interrupted in any of them;
+   a plan file written only at close-out loses everything since the last item, and the
+   resumed run rebuilds it from the diff — or from guesswork.
+
    A mid-branch push is a **checkpoint, not a delivery**: the targeted checks of F.3 are
    what gate it, and the full gate set runs once at Step G over the complete diff. If
    the repo's whole gate takes seconds, run it here too — cheap insurance.
@@ -423,17 +443,22 @@ for a product judgment nobody has answered is an escalation, not a code change.
    `STATUS→IN-REVIEW` (both pre-authorized — never ask). The parent is what waits on
    the PR; the sub-tickets were already commented and moved to their completed state
    as each one closed, in Step F.6. The summary must reflect the
-   **final** state: the PR URL, that CI is green, and that review comments were
-   addressed.
+   **final** state: the PR URL, the CI result, and that review comments were addressed.
+   **Report CI as green only if CI exists and passed.** A repo with no pipeline gets
+   "no CI configured — the gates that ran were <the ones from Step G>", never silence
+   and never "green": the reader cannot tell a passing suite from an absent one, and the
+   PR body is where that difference gets decided.
 2. **Ask what to do with `.claude/plans/<TICKET>.md`** — one `AskUserQuestion`, three
    options, **Delete it** first: delete, leave it in place, or move it into the repo's
    own documentation if the team keeps plans there. Never commit it on your own
    initiative. Deleting is `rm .claude/plans/<TICKET>.md` and nothing wider — the grant in
    `allowed-tools` covers that path only, so a broader `rm` prompts, which is the point.
-3. Report back in the session: PR URL, CI status, tracker status, **which sub-tickets
-   were built and which were left out of this run**, what the watch loop changed after
-   the first push, which comments you addressed, which gates were skipped because the
-   repo does not define them, and anything deliberately left for a follow-up.
+3. Report back in the session: PR URL, CI status — green, red, or **not configured**,
+   named as such — tracker status, **which sub-tickets were built and which were left out
+   of this run** (and which were already complete before it started), what the watch loop
+   changed after the first push, which comments you addressed, which gates were skipped
+   because the repo does not define them, and anything deliberately left for a
+   follow-up.
 
 ---
 

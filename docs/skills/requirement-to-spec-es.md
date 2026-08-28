@@ -84,7 +84,10 @@ avisar — y convierte las respuestas ya cerradas en algo listo para construir.
   vez de adivinarlo, así que `npx` es de hecho obligatorio si tus documentos son `.docx`.
 - Opcionalmente, el servidor MCP de Linear o el de Azure DevOps / el CLI `az` con la extensión
   `azure-devops` — el que sea que quieras ofrecido como destino. Ninguno es obligatorio; el modo
-  archivo siempre funciona.
+  archivo siempre está disponible como destino si no hay tracker conectado — aunque sigue
+  dependiendo de que el documento se pueda leer. Sin `npx`, un `.docx`, `.xlsx` o `.pptx` detiene la
+  corrida sin importar dónde se iba a archivar el resultado, y lo mismo un archivo protegido con
+  contraseña o corrupto, en cualquier formato.
 
 ## Lo que nunca hace
 

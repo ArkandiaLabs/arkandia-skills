@@ -40,7 +40,10 @@ the resolved decisions into an ordered, buildable list.
 
 - **Never invent content you have not read.** A document that failed to convert, an attachment
   that is missing, a page you could not reach — say so by name. Never describe what a missing
-  attachment probably shows.
+  attachment probably shows. An absence is **reported, never asked about**: you already know the
+  file is not there, so it costs a report line, not one of the four questions in a batch. The
+  scope gap it leaves can still become a question — about the decision that is now unanswerable,
+  never about whether the file arrived.
 - **One fact, one home.** A decision the user makes lives in exactly one place: the Decisions list,
   quoted verbatim, carried into the spec. Do not paraphrase it into something looser two phases
   later.
@@ -131,8 +134,12 @@ offer has to happen before any conversion, not two phases later. Ask it, then go
 1. **Check `npx --version`, then convert the document to Markdown.** The check comes first — the
    whole chain depends on it and Phase 2 is too late to discover it. Then follow
    `references/document-conversion.md`: the fallback chain (`anydoc` → native `Read` where the
-   format allows it → stop and ask), the mandatory attachment check, the temp-directory rule, and
-   the single output model the rest of the skill relies on regardless of source format. If `npx` is
+   format allows it → stop and ask), with the conversion call **bounded by an explicit Bash
+   timeout** so a network-less `npx` hangs the call and not the run; the mandatory attachment
+   check; the temp-directory rule, including the six-character **run id** that keeps two
+   concurrent runs off each other's files — pick it once here, reuse it for every file this run
+   writes, and print it in the report; and the single output model the rest of the skill relies on
+   regardless of source format. If `npx` is
    missing, offer degraded mode with its real per-format limits — it does **not** cover `.docx`,
    `.xlsx`, or `.pptx` — and carry the answer into Phase 2's report.
 2. **Read the target repo's context**: `AGENTS.md`, `CLAUDE.md`, `docs/` (including ADRs), the same

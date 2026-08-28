@@ -62,7 +62,8 @@ They build the ones you hand them — and ask which of them a given run should c
    **parent** is what waits on the PR.
 10. **Gates** — once, over the complete branch diff. It resolves your repo's own gate commands (a
     Gates/Commands section in `CLAUDE.md`/`AGENTS.md` → manifest detection → ask), then
-    `/code-review`, plus `/security-review` when the diff touches auth, secrets, or input parsing.
+    `/code-review`, plus `/security-review` when the diff touches auth, secrets, input parsing, or
+    external I/O.
     Never proceeds on red. Gates your repo doesn't define are reported as skipped, not silently
     counted as green.
 11. **Open the PR** — one PR for the whole ticket, listing each subissue and the verification

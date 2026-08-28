@@ -85,8 +85,12 @@ Inside any .NET repository:
 
 /arkandia:instrument-project-dotnet      # deterministic: the eight controls
 /arkandia:instrument-agent-dotnet        # non-deterministic: MCP servers + hooks
+```
 
-/arkandia:requirement-to-spec requirements.docx               # a requirement doc → spec + task breakdown
+In any repository, whatever the stack — these four assume no particular architecture:
+
+```
+/arkandia:requirement-to-spec requirements.docx     # a requirement doc → spec + task breakdown
 
 /arkandia:linear-plan-build ABC-123                 # a Linear issue → green PR
 /arkandia:linear-plan-build ABC-123 skip-checkpoint # routine issue: no approval stop

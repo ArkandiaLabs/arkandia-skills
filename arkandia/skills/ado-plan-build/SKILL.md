@@ -12,7 +12,7 @@ description: >
   Invoke with `/arkandia:ado-plan-build [work item id | URL] [skip-checkpoint]`.
 argument-hint: "[work item id (2, #2, or its URL)] [skip-checkpoint]"
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(rm .claude/plans/*), Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv *), Bash(go *), Bash(cargo *), Bash(dotnet *), Bash(mvn *), Bash(gradle *), Bash(./gradlew*), Bash(bundle *), Bash(rake *), Bash(composer *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(rm .claude/plans/*), Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm test*), Bash(npm run *), Bash(npm ci*), Bash(npm install*), Bash(npx *), Bash(pnpm test*), Bash(pnpm run *), Bash(pnpm install*), Bash(yarn test*), Bash(yarn run *), Bash(yarn install*), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv run *), Bash(uv sync*), Bash(go test*), Bash(go build*), Bash(go vet*), Bash(cargo test*), Bash(cargo build*), Bash(cargo clippy*), Bash(cargo fmt*), Bash(dotnet test*), Bash(dotnet build*), Bash(dotnet restore*), Bash(dotnet format*), Bash(mvn test*), Bash(mvn verify*), Bash(mvn package*), Bash(gradle test*), Bash(gradle build*), Bash(gradle check*), Bash(./gradlew test*), Bash(./gradlew build*), Bash(./gradlew check*), Bash(bundle exec *), Bash(bundle install*), Bash(rake *), Bash(composer install*), Bash(composer run *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
 ---
 
 # Azure Boards work item → shipped feature
@@ -194,6 +194,16 @@ addresses the review comments, then leaves the completion to a human.
   skill's initiative. Step J asks what to do with it.
 - **Keep secrets out of the shell and the commit.** Don't stage `.env` files, keys, or
   tokens, and never echo a PAT into a command, a commit message, or a PR body.
+- **The Bash allowlist is narrowed to the subcommands this run actually uses**, so a
+  package publish, an arbitrary GitHub API mutation or an unrelated tool prompts instead
+  of running silently. `gh api` is scoped to the inline-review-comment path — the one
+  place the skill needs it. Two grants stay wide on purpose and are worth knowing about:
+  `git add`/`git push` and `npx`. A glob cannot express "not `-A`" or "not `--force`",
+  and the gate a repo defines may legitimately be `npx <anything>`; the controls there
+  are the textual rules in `references/build-loop.md` (stage only what the item touched,
+  never `git add -A`, never force-push, never merge). A team that wants a hard boundary
+  rather than an instruction should add `permissions.deny` rules in `settings.json` —
+  deny wins over any allowlist, including this one.
 - **Gate commands.** The mainstream runners (`make`, `npm`/`pnpm`/`yarn`, `pytest`,
   `go`, `cargo`, `dotnet`, `mvn`/`gradle`, `bundle`, `composer`) are pre-approved. If
   your repo's gate isn't among them, run it and approve the prompt — never skip or
@@ -216,7 +226,7 @@ addresses the review comments, then leaves the completion to a human.
 | Tags leak into the plan, or the description reads as markup | `System.Description` and the acceptance criteria come back as **HTML**, not Markdown | Render to text before reasoning over them |
 | The state write lands in the wrong column | The state was matched by name against the wrong process — Basic, Agile and Scrum use different sets | Read the item's current `System.State` and its type, pick the state that means in-progress, in-review or completed **for that process**, and name the one you picked |
 | Child work items sit active after their work shipped | Step F.6.4 was skipped, or the process's completed state was never resolved | Each child closes into `STATUS→DONE` as Step F.6 finishes it; only the parent stays in review, waiting on the PR |
-| Boards never links the commit or the PR to the item | `LINK-TOKEN` is wrong. Only **`AB#<id>`** works — a bare `#2` does nothing | The exact `AB#<id>` string in the commit message, plus `--work-items <id>` on the PR |
+| Boards never links the commit or the PR to the item | `LINK-TOKEN` is wrong, or the wrong id is used. Only **`AB#<id>`** works — a bare `#2` does nothing — and **each Step F.6 commit carries its own CHILD id while the PR is opened against the PARENT**; one id everywhere leaves each child with no commit attached | The exact `AB#<id>` string in each commit, with the id of the child that commit closes, plus `--work-items <parent id>` on the PR |
 | The PR cannot be completed even on green | A branch policy requires a reviewer approval as well | Expected, not a bug. This skill drives CI to green and answers the comments; completing it is a human's call |
 | No pipeline run appears for the branch | Either the repo has no pipeline, or none is triggered by this branch | `az pipelines runs list --branch <branch>`. If there genuinely is no CI, say so and skip to the review-comment half of Step I — an absent pipeline is **not** a green pipeline, and Step J must name it as a skipped gate |
 | Phase 2 stops on a dirty working tree | By design. Stashing someone's uncommitted work is not this skill's call | `git status`. Commit or stash it yourself, then re-run |

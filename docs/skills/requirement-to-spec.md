@@ -80,7 +80,10 @@ resolved answers into something buildable.
   guessing at it, so `npx` is effectively required if your documents are `.docx`.
 - Optionally, the Linear MCP server or the Azure DevOps MCP server / `az` CLI with the
   `azure-devops` extension — whichever trackers you want offered as a destination. None of these
-  are required; file mode always works.
+  are required: with no tracker connected, file mode is always available as a destination — though
+  it still depends on the document being readable in the first place. Without `npx`, a `.docx`,
+  `.xlsx` or `.pptx` stops the run wherever the result was going to be filed, and so does a
+  password-protected or corrupt file of any format.
 
 ## What it never does
 

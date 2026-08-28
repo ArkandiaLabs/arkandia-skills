@@ -67,7 +67,7 @@ estos consumen: por contrato, estos dos nunca crean subissues. Construyen los qu
 10. **Gates** — una sola vez, sobre el diff completo de la rama. Resuelve los comandos de gate
     propios de tu repo (una sección Gates/Commands en `CLAUDE.md`/`AGENTS.md` → detección por
     manifiesto → preguntar), luego `/code-review`, más `/security-review` cuando el diff toca
-    autenticación, secretos o parsing de entrada. Nunca avanza en rojo. Los gates que tu repo no
+    autenticación, secretos, parsing de entrada o I/O externo. Nunca avanza en rojo. Los gates que tu repo no
     define se reportan como saltados, no se cuentan en verde en silencio.
 11. **Abrir el PR** — uno solo para todo el ticket, listando cada subissue y los comandos de
     verificación realmente ejecutados. **Si algo de la lista de trabajo no se implementó —
