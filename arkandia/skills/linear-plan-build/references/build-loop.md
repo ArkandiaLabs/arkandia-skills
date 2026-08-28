@@ -309,6 +309,12 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
       the one that waits** — it moves to `STATUS→IN-REVIEW` at Step J and stays there
       until someone merges the PR, which is never you. A child you had to abandon or
       escalate is the exception: leave it in progress and say so.
+
+      **`STATUS→DONE` is for children only.** If `TICKET` has no children, the work list
+      is the ticket itself (Step A) — it is the parent, so **comment here and leave the
+      status alone**. Step J moves it to `STATUS→IN-REVIEW`. Closing it here would put
+      the board in Done before a PR exists and then walk it *backwards* into In Review,
+      which is the one thing a tracker must never show.
    5. Update the plan file, then start the next item.
 
    A mid-branch push is a **checkpoint, not a delivery**: the targeted checks of F.3 are
@@ -349,13 +355,28 @@ evidence.
 **Never proceed on red.** Fix and re-run this step. On an *ambiguous* failure — flaky
 versus real, unclear error, possibly pre-existing — escalate rather than guess.
 
+**Fixes here follow the same close-out as F.6.** Stage only the files you touched,
+commit with the `LINK-TOKEN` of the sub-ticket the fix belongs to, push `BRANCH`. Never
+`git add -A`, never the plan file, never anything secret-like. The commit/push rules live
+in F.6.1–F.6.3 and they apply to every commit on this branch, not only the ones made
+inside the loop.
+
+**A red gate on work already marked done sends that item back.** F.6.4 closes a child on
+its *targeted* checks; this step is the first time the full suite, `/code-review` and
+`/security-review` see the complete diff. If a finding lands in a sub-ticket already at
+`STATUS→DONE`, move it back to in progress, `COMMENT` what the gate found, fix it, and
+close it again through F.6.4. A tracker left asserting a verification that later failed
+is worse than one that never claimed it.
+
 ## Step H — Open the PR
 
 The commits and pushes already happened, one per item, in Step F.6. What is left is the
 delivery.
 
 1. **Confirm the work list is complete**: every selected sub-ticket implemented, its
-   checks green, its commit pushed, and `git status` clean apart from the plan file.
+   checks green, its commit pushed, and `git status` clean apart from the plan file. If
+   it is not clean, a fix from Step G was left uncommitted — commit it under F.6.1–F.6.3
+   rather than improvising a commit here.
 2. **If anything on the work list was not implemented** — blocked, escalated, or
    abandoned — **do not open the PR.** Report what is missing and why, `COMMENT` the
    same on `TICKET`, and **leave `BRANCH` pushed**: nothing that was built is lost and
@@ -385,7 +406,9 @@ On red:
 2. Classify **flaky vs. real**. Rerun a plausibly-flaky job **once**. If it fails
    again, it is real.
 3. Fix a real failure **at the source** — not by loosening the test. Re-run Step G
-   locally, then push.
+   locally, then commit and push under the F.6.1–F.6.3 rules — staged narrowly, with the
+   `LINK-TOKEN` of the sub-ticket the fix belongs to. Same for a code change made in
+   response to a review comment below.
 4. **Convergence guard:** three fix attempts on the same failing job and you stop and
    escalate. A loop that isn't converging is a signal, not a reason to keep going.
 
@@ -405,7 +428,8 @@ for a product judgment nobody has answered is an escalation, not a code change.
 2. **Ask what to do with `.claude/plans/<TICKET>.md`** — one `AskUserQuestion`, three
    options, **Delete it** first: delete, leave it in place, or move it into the repo's
    own documentation if the team keeps plans there. Never commit it on your own
-   initiative.
+   initiative. Deleting is `rm .claude/plans/<TICKET>.md` and nothing wider — the grant in
+   `allowed-tools` covers that path only, so a broader `rm` prompts, which is the point.
 3. Report back in the session: PR URL, CI status, tracker status, **which sub-tickets
    were built and which were left out of this run**, what the watch loop changed after
    the first push, which comments you addressed, which gates were skipped because the

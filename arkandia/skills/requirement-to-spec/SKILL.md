@@ -15,7 +15,7 @@ description: >
   architecture or tracker. Invoke with `/arkandia:requirement-to-spec <path to requirement document>`.
 argument-hint: "<path to requirement document>"
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Write(docs/specs/**), AskUserQuestion, Agent, Bash(npx --version*), Bash(npx -y @firecrawl/anydoc@0.2.3*), Bash(az boards *), Bash(az devops invoke --org * --query *), Bash(az devops invoke --org * --area wit *), Bash(az account show*), Bash(az extension list*), mcp__linear, mcp__linear-server, mcp__azure-devops, mcp__linear__get_team, mcp__linear__list_teams, mcp__linear__list_issue_statuses, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__save_issue, mcp__linear-server__get_team, mcp__linear-server__list_teams, mcp__linear-server__list_issue_statuses, mcp__linear-server__get_issue, mcp__linear-server__list_issues, mcp__linear-server__save_issue, mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
+allowed-tools: Read, Glob, Grep, Write(docs/specs/**), AskUserQuestion, Agent, Bash(npx --version*), Bash(npx -y @firecrawl/anydoc@0.2.3*), Bash(az boards *), Bash(az devops invoke --org * --query *), Bash(az devops invoke --org * --area wit *), Bash(az account show*), Bash(az extension list*), mcp__linear, mcp__linear-server, mcp__azure-devops, mcp__linear__get_team, mcp__linear__list_teams, mcp__linear__list_issue_statuses, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__save_issue, mcp__linear-server__get_team, mcp__linear-server__list_teams, mcp__linear-server__list_issue_statuses, mcp__linear-server__get_issue, mcp__linear-server__list_issues, mcp__linear-server__save_issue, mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments, mcp__azure-devops__wit_create_work_item, mcp__azure-devops__wit_update_work_item, mcp__azure-devops__wit_add_child_work_items, mcp__azure-devops__wit_work_items_link, mcp__azure-devops__wit_add_work_item_comment, mcp__azure-devops__wit_list_work_item_types, mcp__azure-devops__wit_get_work_item_type, mcp__azure-devops__core_list_projects
 ---
 
 # requirement-to-spec — business document → spec + task breakdown
@@ -91,7 +91,12 @@ the resolved decisions into an ordered, buildable list.
   names after them overlap on purpose: the server-wide form is documented for `settings.json`
   permission rules but **not** documented for a skill's `allowed-tools`, so the explicit names are
   the floor that is known to work and the server-wide entries are what covers the unattested
-  creation tools if the broader form is honored. Same reasoning for `Write(docs/specs/**)`: if the
+  creation tools if the broader form is honored. **The Azure DevOps names past the two attested
+  readers are a guess at the floor, not an attestation** — the write path is discovered by shape at
+  run time (`references/tracker-bindings.md`), and a name listed here that the server does not
+  expose costs nothing. A name it exposes under a different spelling costs one permission prompt,
+  which is the safe direction. Do not read this list as a licence to call a tool without
+  discovering it first. Same reasoning for `Write(docs/specs/**)`: if the
   scoped form turns out not to be supported here, the symptom is a permission *prompt*, never a lost
   file — that is the safe direction to fail, and the fix is to verify the syntax, not to widen the
   grant to a bare `Write`. Drop either half only after testing the run end to end without it.

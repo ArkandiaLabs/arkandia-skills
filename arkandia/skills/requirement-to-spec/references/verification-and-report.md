@@ -40,7 +40,9 @@ an empty one reads as "checked, found nothing".
    made it stale. A document knowingly left wrong is a decision; it belongs somewhere findable, not
    dropped because nobody picked it.
 4. **Not read** — every document or attachment that failed to convert; any tabular data that could
-   not be cross-checked because no database MCP server was connected (**data**, never a contract —
+   not be cross-checked, distinguishing **no database MCP server was connected** from **one was
+   connected and the query was refused or failed** — the second names the tool that was tried, and
+   is never reported as the first (**data**, never a contract —
    contract detection is a repo scan and does not involve a database at all); anything Phase 1/2
    reported as missing or degraded. If a public contract was detected, it was detected; do not file
    it here because some unrelated cross-check was unavailable.

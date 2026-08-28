@@ -40,6 +40,12 @@ document itself raises them:
    one of its questions, with the concrete numbers on both sides. This is the step that catches "the
    spreadsheet says 11, the database says 25" — it is worthless if it runs after the questions are
    already asked, and dishonest if the report claims it ran when it did not.
+
+   **A database MCP server is detected by shape, so its tools cannot be named in `allowed-tools`
+   ahead of time — expect a permission prompt on the first query, and let it happen.** That prompt
+   is the run working. What is forbidden is treating a *refused* or unavailable call as "no
+   database connected": Phase 1 already recorded that one is. If the query is denied or fails, say
+   so in the **Not read** section of the report in those words, naming the tool you tried.
 3. **Documentation impact** — resolved in `references/repo-context-impact.md`, turned into one
    question here: which of the documents the change leaves stale get updated in this pass. Ask it
    with the quoted evidence attached, never as a bare list of filenames; "`docs/database.md` line 40

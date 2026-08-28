@@ -120,6 +120,56 @@ All notable changes to the `arkandia` plugin. Versions follow the `version` fiel
   and matches text, not intent. It is a guardrail against mistakes, not a security barrier — but a
   guardrail that appears to cover a case and does not is worse than one known to be incomplete.
 
+- **The same guard again: two false positives the fixes above introduced, and the five paths they
+  did not reach.** Closing four bypasses moved the line, and the line landed on ordinary work.
+  `sudo git commit -m "chore: ignore .env"` was denied — and `timeout`, `nohup`, `env` and `xargs`
+  the same way: the command name was read off the first word of the segment, so a wrapper answered
+  for the command it runs, `git` never set the message-flag gate, and the commit message came back
+  as a command to re-scan. `echo "$(date) adds .env to .gitignore (see PR)"` was denied too: the
+  substitution re-scan closed at the **last** `)` in the token instead of the balanced one, so a
+  single parenthesis of prose dragged the sentence back into the operand list — re-denying, exactly,
+  the case the tokeniser was written to allow. Both were silent against the suite, because every
+  "must not fire" case it had used `git`/`gh` as the first word and prose with no parentheses in it.
+  Now: `$(…)` closes on the balanced paren; wrappers are walked past — their flags, a `timeout`
+  duration, an `env` assignment — and the word they actually run is what classifies the segment.
+
+  With the line back where it belongs, the re-scan was widened to where it had always claimed to
+  reach. It now runs on **every** token before any rule can drop it, so `git commit -m "$(cat
+  .env)"`, `gh pr create --body "$(cat .env)"`, `cat <<< "$(cat .env)"` and `KEY="$(cat .env)"` are
+  denied instead of allowed; a substitution in a heredoc **body** is scanned unless a quoted
+  delimiter (`<<'EOF'`) turned expansion off; both substitution forms in one token are found rather
+  than only the first; and `,` joins `/` and `=` as an anchor in `SECRET_PATTERNS`, which is what
+  `perl -e "open(F,'.env')"` needs — putting the comma in the tokeniser's separators instead would
+  have broken brace expansion, which needs its commas inside the token.
+
+  The re-scan budget is now spent in **bytes appended** rather than in a count of four calls. Four
+  ordinary substitutions — `cd "$(git rev-parse --show-toplevel)"` and three like it — used to
+  exhaust it, after which the rest of the command went unscanned in silence. The bound is still
+  finite; it is no longer reachable by commands an agent writes all day. Twenty-three cases added,
+  pinning both the false positives and the paths.
+
+- **`linear-plan-build` / `ado-plan-build`: a ticket with no subissues no longer goes Done and then
+  backwards.** The work list falls back to the ticket itself when it has no children, and Step F.6.4
+  closed "the sub-ticket" without an exception for that case — so the board showed Done before a PR
+  existed and Step J then walked it back to In Review, a state the binding tables define as the
+  parent's alone. F.6.4 now comments and leaves the status alone when the item is the parent.
+  Two more gaps around the same move: fixes made in Step G and Step I had no commit rule at all once
+  commit and push moved into F.6 — Step H then demanded a clean tree that nothing was allowed to
+  produce — and a gate finding against a child already at Done left the tracker permanently
+  asserting a verification that had failed. Step G and Step I now point at the F.6.1–F.6.3 rules,
+  and a red gate sends the affected child back through F.6.4. `Bash(rm .claude/plans/*)` is granted,
+  scoped to that path, so Step J's recommended "Delete it" is an option the run can actually carry
+  out.
+
+- **`requirement-to-spec`: the database cross-check can no longer be reported as "not connected".**
+  A database MCP server is detected by the *shape* of its tools, so it cannot be named in
+  `allowed-tools` ahead of time and the first query prompts. That prompt is the run working; what is
+  now forbidden in writing is folding a refused or failed query into "no database connected" when
+  Phase 1 recorded that one is. The report separates the two and names the tool that was tried. The
+  Azure DevOps write path gains an explicit floor of tool names past the two attested readers —
+  a guess at the spelling, marked as one, since a name the server does not expose costs nothing and
+  one it spells differently costs a single prompt.
+
 ## [0.4.0] — 2026-08-25
 
 ### Added
