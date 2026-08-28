@@ -59,7 +59,8 @@ They build the ones you hand them — and ask which of them a given run should c
    own density and language rather than the agent's habits. As each subissue closes: stage only its
    files, commit with **that subissue's** link token, push, then comment on it and **move it to
    your team's completed state** — a child that is implemented, gated and pushed is finished. The
-   **parent** is what waits on the PR.
+   **parent** is what waits on the PR. A ticket with **no** subissues is its own work list: its key
+   goes in every commit, and it is left for Step J to move to review rather than closed here.
 10. **Gates** — once, over the complete branch diff. It resolves your repo's own gate commands (a
     Gates/Commands section in `CLAUDE.md`/`AGENTS.md` → manifest detection → ask), then
     `/code-review`, plus `/security-review` when the diff touches auth, secrets, input parsing, or

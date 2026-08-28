@@ -63,7 +63,9 @@ estos consumen: por contrato, estos dos nunca crean subissues. Construyen los qu
    del agente. Al cerrar cada subissue: pone en el índice solo sus archivos, commitea con el token
    de enlace **de ese subissue**, hace push, lo comenta y **lo mueve al estado de terminado de tu
    equipo** — un hijo implementado, con sus gates en verde y con push hecho está terminado como
-   unidad de trabajo. El **padre** es el que queda esperando el PR.
+   unidad de trabajo. El **padre** es el que queda esperando el PR. Un ticket **sin** subissues es
+   su propia lista de trabajo: su clave va en todos los commits, y se deja para que Step J lo mueva
+   a revisión en vez de cerrarlo aquí.
 10. **Gates** — una sola vez, sobre el diff completo de la rama. Resuelve los comandos de gate
     propios de tu repo (una sección Gates/Commands en `CLAUDE.md`/`AGENTS.md` → detección por
     manifiesto → preguntar), luego `/code-review`, más `/security-review` cuando el diff toca

@@ -313,7 +313,10 @@ Set `STATUS→IN-PROGRESS` here (pre-authorized — do not ask).
       file, never anything secret-like (`.env`, keys, tokens), and never echo a secret
       value into a command or a commit message.
    2. Commit with a message carrying `LINK-TOKEN` for **that sub-ticket**, so the
-      tracker attaches the commit to the child and not only to the parent.
+      tracker attaches the commit to the child and not only to the parent. **When the
+      work list is `TICKET` itself** — no children, per Step A — there is no child key
+      to use: the parent's is the one that goes in every commit, here and in the fixes
+      made at Step G and Step I.
    3. Push `BRANCH`. Everything lands on the same branch — **one branch for the whole
       `TICKET`**, and one PR at the end.
    4. `COMMENT` on the sub-ticket with what changed and the checks that verified it,
@@ -451,8 +454,10 @@ for a product judgment nobody has answered is an escalation, not a code change.
 2. **Ask what to do with `.claude/plans/<TICKET>.md`** — one `AskUserQuestion`, three
    options, **Delete it** first: delete, leave it in place, or move it into the repo's
    own documentation if the team keeps plans there. Never commit it on your own
-   initiative. Deleting is `rm .claude/plans/<TICKET>.md` and nothing wider — the grant in
-   `allowed-tools` covers that path only, so a broader `rm` prompts, which is the point.
+   initiative. Deleting is `rm .claude/plans/<TICKET>.md` and nothing wider. It **will ask
+   for permission** — `allowed-tools` is static and `<TICKET>` is not, so no grant can be
+   written that covers this plan and not every other ticket's. One prompt, for the only
+   destructive step in the run, immediately after the user chose it.
 3. Report back in the session: PR URL, CI status — green, red, or **not configured**,
    named as such — tracker status, **which sub-tickets were built and which were left out
    of this run** (and which were already complete before it started), what the watch loop

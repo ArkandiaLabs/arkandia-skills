@@ -199,6 +199,18 @@ check $H deny 'ruby arg list'            "$(payload_bash "ruby -e \"File.read('.
 # The comma is an anchor; a space still is not, or every sentence would match.
 check $H silent 'comma in prose'         "$(payload_bash 'gh pr create -t "add .env.example" -b "documents .env, .env.local and keys"')"
 
+# --- a paren inside quotes is text, not structure ----------------------------------------------
+# The balanced-paren scan counted every `)`, so a substitution could close itself early on one it
+# was merely printing, and the read after it fell out of the re-scan while bash still ran it. The
+# double-quote scan had the mirror bug: a `$(...)` resets quoting for its own body, so the next `"`
+# in the text is not necessarily the end of the outer string.
+check $H deny 'paren printed inside subst' "$(payload_bash "echo \"\$(printf ')'; cat .env)\"")"
+check $H deny 'many parens printed'        "$(payload_bash "echo \"\$(printf '))))'; cat .env)\"")"
+check $H deny 'quote reopened in subst'    "$(payload_bash 'echo "$(printf \"(\" ; cat .env)"')"
+check $H deny 'closing paren in dquotes'   "$(payload_bash 'echo "$(printf \")\" ; cat .env)"')"
+# ...and quoting awareness must not turn prose back into operands.
+check $H silent 'quoted subst then prose'  "$(payload_bash "echo \"\$(printf 'hola') adds .env (see PR)\"")"
+
 # --- the re-scan budget is spent in bytes, not in calls ----------------------------------------
 # Four ordinary substitutions used to exhaust a four-call budget, and everything after them went
 # unscanned. This is the shape an agent writes all day; the read at the end must still be seen.

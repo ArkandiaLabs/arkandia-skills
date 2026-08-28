@@ -12,7 +12,7 @@ description: >
   Invoke with `/arkandia:ado-plan-build [work item id | URL] [skip-checkpoint]`.
 argument-hint: "[work item id (2, #2, or its URL)] [skip-checkpoint]"
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(rm .claude/plans/*), Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm test*), Bash(npm run *), Bash(npm ci*), Bash(npm install*), Bash(npx *), Bash(pnpm test*), Bash(pnpm run *), Bash(pnpm install*), Bash(yarn test*), Bash(yarn run *), Bash(yarn install*), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv run *), Bash(uv sync*), Bash(go test*), Bash(go build*), Bash(go vet*), Bash(cargo test*), Bash(cargo build*), Bash(cargo clippy*), Bash(cargo fmt*), Bash(dotnet test*), Bash(dotnet build*), Bash(dotnet restore*), Bash(dotnet format*), Bash(mvn test*), Bash(mvn verify*), Bash(mvn package*), Bash(gradle test*), Bash(gradle build*), Bash(gradle check*), Bash(./gradlew test*), Bash(./gradlew build*), Bash(./gradlew check*), Bash(bundle exec *), Bash(bundle install*), Bash(rake *), Bash(composer install*), Bash(composer run *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Agent, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, EnterPlanMode, ExitPlanMode, Monitor, ScheduleWakeup, Bash(git status*), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git log*), Bash(git rev-parse*), Bash(git symbolic-ref*), Bash(git fetch*), Bash(git checkout*), Bash(git switch*), Bash(git pull*), Bash(git push*), Bash(az boards*), Bash(az repos*), Bash(az pipelines*), Bash(az devops*), Bash(az account show*), Bash(az extension list*), Bash(make *), Bash(npm test*), Bash(npm run *), Bash(npm ci*), Bash(npm install*), Bash(npx *), Bash(pnpm test*), Bash(pnpm run *), Bash(pnpm install*), Bash(yarn test*), Bash(yarn run *), Bash(yarn install*), Bash(pytest*), Bash(python *), Bash(python3 *), Bash(uv run *), Bash(uv sync*), Bash(go test*), Bash(go build*), Bash(go vet*), Bash(cargo test*), Bash(cargo build*), Bash(cargo clippy*), Bash(cargo fmt*), Bash(dotnet test*), Bash(dotnet build*), Bash(dotnet restore*), Bash(dotnet format*), Bash(mvn test*), Bash(mvn verify*), Bash(mvn package*), Bash(gradle test*), Bash(gradle build*), Bash(gradle check*), Bash(./gradlew test*), Bash(./gradlew build*), Bash(./gradlew check*), Bash(bundle exec *), Bash(bundle install*), Bash(rake *), Bash(composer install*), Bash(composer run *), Bash(php *), mcp__azure-devops__wit_get_work_item, mcp__azure-devops__wit_list_work_item_comments
 ---
 
 # Azure Boards work item → shipped feature
@@ -160,7 +160,7 @@ per access path are in `references/ado-access.md`.
 | `STATUS→DONE` | set a **child** item's completed state — see **States** below — once it is implemented, gated and pushed |
 | `COMMENT` | add to the item's discussion |
 | `BRANCH` | the Phase 2 branch |
-| `LINK-TOKEN` | **`AB#<id>`** — that exact syntax is what makes Boards attach the commit; a bare `#2` does nothing. Each Step F.6 commit carries **the child item's own id**; the PR is opened with the parent's |
+| `LINK-TOKEN` | **`AB#<id>`** — that exact syntax is what makes Boards attach the commit; a bare `#2` does nothing. Each Step F.6 commit carries **the child item's own id**; the PR is opened with the parent's. **With no child items the work list is `TICKET` itself, so its id is the one in every commit as well** |
 | `OPEN-PR` | `az repos pr create … --work-items <id>`, or the MCP equivalent |
 | `CI` | Azure Pipelines runs for the branch — `az pipelines runs list --branch <b>`, then `az pipelines runs show --id <run>` |
 | `PR-COMMENTS` | the PR's comment threads — `az repos pr show`, plus thread discovery per `references/ado-access.md` |
@@ -194,6 +194,13 @@ addresses the review comments, then leaves the completion to a human.
   skill's initiative. Step J asks what to do with it.
 - **Keep secrets out of the shell and the commit.** Don't stage `.env` files, keys, or
   tokens, and never echo a PAT into a command, a commit message, or a PR body.
+- **Deleting the plan file is the one step that asks.** `allowed-tools` is static and
+  `<TICKET>` is not, so no grant can say "this ticket's plan and no other" — a
+  `Bash(rm .claude/plans/*)` would authorise deleting every other ticket's plan too. The
+  grant is therefore absent on purpose: Step J's "Delete it" runs
+  `rm .claude/plans/<TICKET>.md`, exactly that path, and costs one permission prompt.
+  One prompt for the only destructive step in the run, right after the user chose it, is
+  the correct trade.
 - **The Bash allowlist is narrowed to the subcommands this run actually uses**, so a
   package publish, an arbitrary GitHub API mutation or an unrelated tool prompts instead
   of running silently. `gh api` is scoped to the inline-review-comment path — the one
